@@ -35,16 +35,16 @@ export default function LoginPage() {
   return (
     <div className={styles.loginOverlay}>
       <form onSubmit={handleSubmit} className={styles.loginCard}>
-        <div>
-          <h2 className={styles.loginTitle}>🔑 管理员登录</h2>
-          <p className={styles.loginSubtitle}>
-            这是属于虫虫的私人写作花园，请输入开启之钥。
-          </p>
+        <div className={styles.loginIcon}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
         </div>
 
         <input
           type="password"
-          placeholder="请输入管理员钥匙密码"
+          placeholder="请输入密钥"
           className={styles.loginInput}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -54,7 +54,7 @@ export default function LoginPage() {
         {errorMsg && <div className={styles.loginError}>{errorMsg}</div>}
 
         <button type="submit" disabled={submitting} className={styles.loginBtn}>
-          {submitting ? '安全凭证核验中...' : '核验并进入控制台'}
+          {submitting ? '安全凭证核验中...' : '登录'}
         </button>
       </form>
     </div>

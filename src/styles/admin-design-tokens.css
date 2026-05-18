@@ -87,7 +87,7 @@
   --bg-glass-card: var(--admin-bg-elevated);
 
   /* ---- 尺寸常量 ---- */
-  --admin-sidebar-width: 150px;
+  --admin-sidebar-width: 180px;
   --admin-sidebar-collapsed-width: 72px;
   --admin-header-height: 0px;
   --admin-content-max-width: 1400px;

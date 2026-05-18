@@ -6,6 +6,7 @@ import Button from '../shared/Button';
 import AdminCard, { CardHeader, CardBody, CardFooter } from '../shared/AdminCard';
 import Modal, { ConfirmModal } from '../shared/Modal';
 import { useToast } from '../shared/Toast';
+import { formatToChineseDateTime } from '@/lib/date';
 import styles from './WritePage.module.css';
 import {
   IconCloudUpload,
@@ -33,6 +34,7 @@ interface PostListMeta {
   slug: string;
   date: string;
   status: 'DRAFT' | 'PUBLISHED';
+  tags?: string[];
 }
 
 interface WritePageProps {
@@ -662,7 +664,7 @@ function WritePageComponent({
                         <div className={styles.historyInfo}>
                           <span className={`${styles.statusDot} ${post.status === 'PUBLISHED' ? styles.dotPub : styles.dotDraft}`} />
                           <span className={styles.historyPostTitle}>{post.title}</span>
-                          <span className={styles.historyPostDate}>{post.date}</span>
+                          <span className={styles.historyPostDate}>{formatToChineseDateTime(post.date)}</span>
                         </div>
                         <div className={styles.historyActions}>
                           <button

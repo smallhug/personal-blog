@@ -29,6 +29,12 @@ function AdminContentInner() {
     handleDeletePost
   } = useAdmin();
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
@@ -102,7 +108,7 @@ function AdminContentInner() {
     }
   };
 
-  if (isAuthenticated === null) {
+  if (!mounted) {
     return (
       <div className={styles.loading} style={{ padding: '8rem 0' }}>
         智能钥匙凭证静默核验中...

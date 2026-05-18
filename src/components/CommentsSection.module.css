@@ -133,6 +133,21 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.likeBtn svg, .replyBtn svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.likeBtn:hover svg {
+  transform: scale(1.15);
+}
+
+.replyBtn:hover svg {
+  transform: scale(1.1);
 }
 
 .likeBtn:hover {

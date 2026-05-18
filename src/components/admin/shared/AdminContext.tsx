@@ -9,6 +9,7 @@ export interface PostListMeta {
   slug: string;
   date: string;
   status: 'DRAFT' | 'PUBLISHED';
+  tags?: string[];
 }
 
 export interface CommentMeta {
@@ -20,14 +21,13 @@ export interface CommentMeta {
   location: string;
   postSlug: string;
   createdAt: string;
-  status: 'PENDING' | 'APPROVED' | 'DELETED';
+  status: 'PENDING' | 'APPROVED';
 }
 
 export interface StatsMeta {
   total: number;
   pending: number;
   approved: number;
-  deleted: number;
 }
 
 interface AdminContextType {
@@ -44,7 +44,7 @@ interface AdminContextType {
   login: (password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   fetchDashboardData: (tokenArg?: string) => Promise<void>;
-  handleModerateComment: (commentId: string, action: 'APPROVE' | 'DELETE' | 'RESTORE') => Promise<void>;
+  handleModerateComment: (commentId: string, action: 'APPROVE' | 'DELETE') => Promise<void>;
   handleDeletePost: (slug: string) => Promise<boolean>;
 }
 
@@ -60,7 +60,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   // 后台全局数据状态
   const [posts, setPosts] = useState<PostListMeta[]>([]);
   const [comments, setComments] = useState<CommentMeta[]>([]);
-  const [stats, setStats] = useState<StatsMeta>({ total: 0, pending: 0, approved: 0, deleted: 0 });
+  const [stats, setStats] = useState<StatsMeta>({ total: 0, pending: 0, approved: 0 });
   const [loading, setLoading] = useState(true);
 
   // 路由与编辑页内存状态
@@ -83,10 +83,11 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
-      if (postsRes.ok) {
-        const postsData = await postsRes.json();
-        setPosts(postsData);
+      if (!postsRes.ok) {
+        throw new Error(`获取文章列表失败 (状态码: ${postsRes.status})`);
       }
+      const postsData = await postsRes.json();
+      setPosts(postsData);
 
       // 2. 获取待审评论列表与统计
       const commentsRes = await fetch('/api/admin/comments', {
@@ -97,16 +98,18 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
-      if (commentsRes.ok) {
-        const { list, stats: commentStats } = await commentsRes.json();
-        setComments(list);
-        setStats(commentStats);
+      if (!commentsRes.ok) {
+        throw new Error(`获取评论列表失败 (状态码: ${commentsRes.status})`);
       }
+      const { list, stats: commentStats } = await commentsRes.json();
+      setComments(list);
+      setStats(commentStats);
 
       setIsAuthenticated(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('获取后台全局数据故障', err);
-      showToast('error', '大盘数据加载失败，请检查网络连接');
+      setIsAuthenticated(false);
+      showToast('error', err.message || '大盘数据加载失败，请检查网络连接');
     } finally {
       setLoading(false);
     }
@@ -164,14 +167,14 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(false);
     setPosts([]);
     setComments([]);
-    setStats({ total: 0, pending: 0, approved: 0, deleted: 0 });
+    setStats({ total: 0, pending: 0, approved: 0 });
     setActivePage('dashboard');
     setEditSlug(undefined);
     showToast('success', '您已安全退出控制台');
   };
 
   // 评论审批审核流程
-  const handleModerateComment = async (commentId: string, action: 'APPROVE' | 'DELETE' | 'RESTORE') => {
+  const handleModerateComment = async (commentId: string, action: 'APPROVE' | 'DELETE') => {
     try {
       const res = await fetch('/api/admin/comments', {
         method: 'PUT',
@@ -191,7 +194,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           const { list, stats: commentStats } = await commentsRes.json();
           setComments(list);
           setStats(commentStats);
-          showToast('success', action === 'APPROVE' ? '评论已批准发布' : action === 'RESTORE' ? '评论已恢复为待审核状态' : '评论已成功删除');
+          showToast('success', action === 'APPROVE' ? '评论已批准发布' : '评论已成功彻底删除');
         }
       } else {
         showToast('error', '审批动作操作失败，请重试');

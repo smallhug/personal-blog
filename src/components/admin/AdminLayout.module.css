@@ -35,7 +35,7 @@
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--admin-space-8) var(--admin-space-8) var(--admin-space-12);
+  padding: 5px var(--admin-space-8) 5px;
   max-width: 100%;
   width: 100%;
   margin: 0 auto;
@@ -51,13 +51,13 @@
 /* 响应式适配 */
 @media (max-width: 1024px) {
   .content {
-    padding: var(--admin-space-6) var(--admin-space-6) var(--admin-space-10);
+    padding: 5px var(--admin-space-6) 5px;
   }
 }
 
 @media (max-width: 768px) {
   .content {
-    padding: var(--admin-space-4) var(--admin-space-4) var(--admin-space-8);
+    padding: 5px var(--admin-space-4) 5px;
     width: 100%;
   }
 

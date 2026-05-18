@@ -58,15 +58,12 @@ export async function POST(request: NextRequest) {
   try {
     const hasModel = 'postIpView' in db;
     if (hasModel) {
-      // 尝试创建 (slug, ip) 的唯一记录，如果已记录则静默忽略唯一性约束冲突
-      try {
-        await (db as any).postIpView.create({
-          data: { slug, ip },
-        });
-        console.log(`📝 [Prisma 物理记录唯一 IP] Slug: ${slug}, IP: ${ip}`);
-      } catch (e: any) {
-        // 捕获 Prisma P2002 唯一索引冲突异常，不做任何处理表示该 IP 已访问过
-      }
+      // 使用 upsert：存在则跳过，不存在则创建（避免唯一约束冲突错误日志）
+      await (db as any).postIpView.upsert({
+        where: { slug_ip: { slug, ip } },
+        update: {},
+        create: { slug, ip },
+      });
 
       const uniqueViews = await (db as any).postIpView.count({
         where: { slug },

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import CommentForm from './CommentForm';
+import { formatToChineseDateTime } from '@/lib/date';
 import styles from './CommentsSection.module.css';
 
 interface CommentType {
@@ -140,10 +141,7 @@ export default function CommentsSection({ postSlug }: CommentsSectionProps) {
                       <span className={styles.location}>📍 {comment.location}</span>
                       <span className={styles.dot}>•</span>
                       <span className={styles.time}>
-                        {new Date(comment.createdAt).toLocaleDateString('zh-CN', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {formatToChineseDateTime(comment.createdAt)}
                       </span>
                     </span>
                   </div>
@@ -154,13 +152,19 @@ export default function CommentsSection({ postSlug }: CommentsSectionProps) {
                       onClick={() => handleLike(comment.id)}
                       className={`${styles.likeBtn} ${likedComments[comment.id] ? styles.liked : ''}`}
                     >
-                      👍 {comment.likes}
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill={likedComments[comment.id] ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                      </svg>
+                      <span>{comment.likes}</span>
                     </button>
                     <button
                       onClick={() => setReplyToId(replyToId === comment.id ? null : comment.id)}
                       className={styles.replyBtn}
                     >
-                      💬 回复
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      <span>回复</span>
                     </button>
                   </div>
 
@@ -200,10 +204,7 @@ export default function CommentsSection({ postSlug }: CommentsSectionProps) {
                             <span className={styles.location}>📍 {reply.location}</span>
                             <span className={styles.dot}>•</span>
                             <span className={styles.time}>
-                              {new Date(reply.createdAt).toLocaleDateString('zh-CN', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              {formatToChineseDateTime(reply.createdAt)}
                             </span>
                           </span>
                         </div>
@@ -214,7 +215,10 @@ export default function CommentsSection({ postSlug }: CommentsSectionProps) {
                             onClick={() => handleLike(reply.id)}
                             className={`${styles.likeBtn} ${likedComments[reply.id] ? styles.liked : ''}`}
                           >
-                            👍 {reply.likes}
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill={likedComments[reply.id] ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                            </svg>
+                            <span>{reply.likes}</span>
                           </button>
                         </div>
                       </div>

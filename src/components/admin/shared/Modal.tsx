@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import styles from './Modal.module.css';
-import { IconAlertTriangle, IconInfo } from '../icons';
+import { IconInfo } from '../icons';
 
 type ModalVariant = 'default' | 'danger' | 'info';
 type ModalSize = 'sm' | 'md' | 'lg' | 'full';
@@ -73,9 +73,6 @@ export default function Modal({
   };
 
   const renderHeaderIcon = () => {
-    if (variant === 'danger') {
-      return <IconAlertTriangle className={styles.titleIconDanger} size={20} />;
-    }
     if (variant === 'info') {
       return <IconInfo className={styles.titleIconInfo} size={20} />;
     }
@@ -117,8 +114,8 @@ export default function Modal({
 
         {/* 底部操作栏 */}
         {showFooter && (
-          <div className={`${styles.footer} ${styles[variant]}`}>
-            <button 
+          <div className={styles.footer}>
+            <button
               className={styles.cancelBtn}
               onClick={onClose}
             >

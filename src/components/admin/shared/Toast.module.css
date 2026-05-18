@@ -97,9 +97,17 @@
 
 /* 内部元素 */
 .icon {
-  font-size: 1.125rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .message {
@@ -131,4 +139,31 @@
 .closeBtn:hover {
   background: rgba(0, 0, 0, 0.05);
   color: var(--admin-text-primary);
+}
+
+/* 渐进式淡出与物理高度高度收缩动画，根除闪烁与突兀跳动 */
+.exiting {
+  animation: admin-fadeOutShrink 0.25s forwards cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+@keyframes admin-fadeOutShrink {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    max-height: 80px;
+    margin-bottom: 0;
+    padding-top: var(--admin-space-3);
+    padding-bottom: var(--admin-space-3);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(20%) scale(0.95);
+    max-height: 0;
+    margin-bottom: calc(-1 * var(--admin-space-3)); /* 完美抵消 gap 距离，让下方的 Toast 缓缓升上来 */
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    overflow: hidden;
+  }
 }

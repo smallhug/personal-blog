@@ -449,6 +449,13 @@
   box-shadow: none;
 }
 
+.loginIcon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: var(--color-accent-1);
+}
+
 .loginTitle {
   font-family: var(--font-serif);
   font-size: 1.65rem;

@@ -2,8 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyAdminAuth } from '@/lib/auth';
 import { getSortedPostsData } from '@/lib/posts';
+import fs from 'fs';
+import path from 'path';
 
 export const revalidate = 0;
+
+// 递归计算文件夹及其子文件夹内所有文件的体积（字节）
+function getFolderSize(dirPath: string): number {
+  let size = 0;
+  try {
+    if (!fs.existsSync(dirPath)) return 0;
+    const files = fs.readdirSync(dirPath);
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      const stats = fs.statSync(filePath);
+      if (stats.isDirectory()) {
+        size += getFolderSize(filePath);
+      } else {
+        size += stats.size;
+      }
+    }
+  } catch (e) {
+    console.warn('读取文件夹体积时发生异常:', dirPath, e);
+  }
+  return size;
+}
 
 export async function GET(request: NextRequest) {
   // 1. 进行网关鉴权校验
@@ -113,7 +136,29 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // 返回精心聚合成熟的看板大包数据
+    // 7.5. 收集系统物理存储大小健康指标
+    let dbSize = 0;
+    try {
+      const dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
+      if (fs.existsSync(dbPath)) {
+        dbSize = fs.statSync(dbPath).size;
+      }
+    } catch (e) {
+      console.warn('获取 SQLite 体积失败:', e);
+    }
+
+    const contentDir = path.join(process.cwd(), 'content/posts');
+    const postsSize = getFolderSize(contentDir);
+
+    const uploadsDir = path.join(process.cwd(), 'public/uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      try {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      } catch (e) {}
+    }
+    const uploadsSize = getFolderSize(uploadsDir);
+
+    // 返回精心聚合成熟的看板大包数据（含健康体积指标）
     return NextResponse.json({
       success: true,
       metrics: {
@@ -129,11 +174,64 @@ export async function GET(request: NextRequest) {
       },
       recentComments,
       topPosts,
+      health: {
+        dbSize,
+        postsSize,
+        uploadsSize,
+      },
     });
   } catch (err) {
     console.error('看板聚合数据出错:', err);
     return NextResponse.json(
       { success: false, message: '服务器聚合后台看板异常' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  // 1. 进行网关维护鉴权校验
+  if (!verifyAdminAuth(request)) {
+    return NextResponse.json(
+      { message: '安全网关拦截：未授权的系统维护操作' },
+      { status: 401 }
+    );
+  }
+
+  try {
+    // 2. 对 SQLite 执行数据库一键收缩和索引重排整理
+    await db.$executeRawUnsafe('VACUUM');
+
+    // 3. 计算收缩完成后的最新物理磁盘体积
+    let dbSize = 0;
+    try {
+      const dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
+      if (fs.existsSync(dbPath)) {
+        dbSize = fs.statSync(dbPath).size;
+      }
+    } catch (e) {
+      console.warn('VACUUM 后获取 SQLite 体积失败:', e);
+    }
+
+    const contentDir = path.join(process.cwd(), 'content/posts');
+    const postsSize = getFolderSize(contentDir);
+
+    const uploadsDir = path.join(process.cwd(), 'public/uploads');
+    const uploadsSize = getFolderSize(uploadsDir);
+
+    return NextResponse.json({
+      success: true,
+      message: 'SQLite 数据库 VACUUM 压缩碎片整理与健康维护已大功告成！',
+      health: {
+        dbSize,
+        postsSize,
+        uploadsSize,
+      },
+    });
+  } catch (err) {
+    console.error('执行数据库 VACUUM 维护异常:', err);
+    return NextResponse.json(
+      { success: false, message: '系统执行 VACUUM 优化时发生未知异常' },
       { status: 500 }
     );
   }

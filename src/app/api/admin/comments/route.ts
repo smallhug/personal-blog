@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
     const total = await db.comment.count();
     const pending = await db.comment.count({ where: { status: 'PENDING' } });
     const approved = await db.comment.count({ where: { status: 'APPROVED' } });
-    const deleted = await db.comment.count({ where: { status: 'DELETED' } });
 
     return NextResponse.json({
       list: commentsList,
@@ -30,7 +29,7 @@ export async function GET(request: NextRequest) {
         total,
         pending,
         approved,
-        deleted,
+        deleted: 0,
       },
     });
   } catch (err) {
@@ -39,7 +38,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 2. PUT：执行评论审核流程（批准上线 / 逻辑软删除清理）
+// 2. PUT：执行评论审核流程（批准上线 / 彻底物理删除）
 export async function PUT(request: NextRequest) {
   if (!verifyAdminAuth(request)) {
     return NextResponse.json({ message: '安全网关拦截：未授权的评论审批操作' }, { status: 401 });
@@ -60,24 +59,11 @@ export async function PUT(request: NextRequest) {
       });
       return NextResponse.json(approvedComment);
     } else if (action === 'DELETE') {
-      // 逻辑软删除：为了保障其子回复能够正常显示且嵌套评论树不断裂，
-      // 我们将其状态更新为 DELETED，并对其文本内容进行强制内容清理擦除（防止垃圾广告残留数据库）
-      const softDeletedComment = await db.comment.update({
+      // 物理彻底删除评论：从数据库中彻底清除此记录
+      await db.comment.delete({
         where: { id: commentId },
-        data: {
-          status: 'DELETED',
-          content: '🚫 该评论因内容违规或垃圾灌水已被管理员逻辑删除。',
-          nickname: '已注销用户',
-        },
       });
-      return NextResponse.json(softDeletedComment);
-    } else if (action === 'RESTORE') {
-      // 恢复已删除评论：状态回退为 PENDING 待审核
-      const restoredComment = await db.comment.update({
-        where: { id: commentId },
-        data: { status: 'PENDING' },
-      });
-      return NextResponse.json(restoredComment);
+      return NextResponse.json({ success: true, message: '评论已物理彻底删除' });
     } else {
       return NextResponse.json({ message: '未知的审批操作' }, { status: 400 });
     }

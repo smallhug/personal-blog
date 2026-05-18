@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PostMeta } from '@/lib/posts';
+import { formatToChineseDateTime } from '@/lib/date';
 import styles from './HomeContainer.module.css';
 
 interface TagCloudItem {
@@ -149,11 +150,7 @@ export default function HomeContainer({ initialPosts, tags, commentCounts = {}, 
                     {/* 元数据行 */}
                     <div className={styles.postMeta}>
                       <span>
-                        {new Date(post.date).toLocaleDateString('zh-CN', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                        }).replace(/\//g, '-')}
+                        {formatToChineseDateTime(post.date)}
                       </span>
                       <span className={styles.dot}>·</span>
                       <span>约 {post.readingTime} 分钟</span>

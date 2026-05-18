@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import Button from '../shared/Button';
 import AdminCard, { CardHeader, CardBody, CardFooter } from '../shared/AdminCard';
 import { useToast } from '../shared/Toast';
 import Modal, { ConfirmModal } from '../shared/Modal';
 import LoadingSkeleton, { CommentCardSkeleton } from '../shared/LoadingSkeleton';
+import { formatToChineseDateTime } from '@/lib/date';
 import styles from './CommentsPage.module.css';
 import {
   IconTotal,
@@ -26,24 +27,42 @@ interface CommentMeta {
   location: string;
   postSlug: string;
   createdAt: string;
-  status: 'PENDING' | 'APPROVED' | 'DELETED';
+  status: 'PENDING' | 'APPROVED';
 }
 
 interface StatsMeta {
   total: number;
   pending: number;
   approved: number;
-  deleted: number;
 }
 
 import { useAdmin } from '../shared/AdminContext';
 
-type FilterType = 'ALL' | 'PENDING' | 'APPROVED' | 'DELETED';
+type FilterType = 'ALL' | 'PENDING' | 'APPROVED';
 
-// 使用memo包裹，避免不必要的重渲染
 function CommentsPageComponent() {
-  const { comments, stats, loading, handleModerateComment: contextModerate } = useAdmin();
+  const { comments, posts, stats, loading, handleModerateComment: contextModerate } = useAdmin();
   const { showToast } = useToast();
+
+  // 建立关联文章 slug 到标题的快速查找 Mapping
+  const postSlugToTitleMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (posts) {
+      posts.forEach(post => {
+        map[post.slug] = post.title;
+      });
+    }
+    return map;
+  }, [posts]);
+
+  // 🐞 后台调试日志探测，用以在浏览器 Console 中极其敏锐地捕获数据流向
+  useEffect(() => {
+    console.log("🐞 [CommentsPage Debug] useAdmin() Raw Global Context Data:", {
+      comments,
+      stats,
+      loading
+    });
+  }, [comments, stats, loading]);
   
   const [localFilter, setLocalFilter] = useState<FilterType>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,7 +71,7 @@ function CommentsPageComponent() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState<CommentMeta | null>(null);
 
-  const handleModerateComment = async (commentId: string, action: 'APPROVE' | 'DELETE' | 'RESTORE') => {
+  const handleModerateComment = async (commentId: string, action: 'APPROVE' | 'DELETE') => {
     try {
       setActionLoading(commentId);
       await contextModerate(commentId, action);
@@ -92,7 +111,6 @@ function CommentsPageComponent() {
     { value: 'ALL', label: '全部', icon: <IconTotal size={14} />, count: stats.total },
     { value: 'PENDING', label: '待审核', icon: <IconClock size={14} />, count: stats.pending },
     { value: 'APPROVED', label: '已批准', icon: <IconCheckCircle size={14} />, count: stats.approved },
-    { value: 'DELETED', label: '已删除', icon: <IconTrash size={14} />, count: stats.deleted },
   ];
 
   return (
@@ -102,7 +120,7 @@ function CommentsPageComponent() {
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
         title="确认删除评论"
-        message={`确定要删除「${selectedComment?.nickname}」的这条评论吗？该操作无法撤销。`}
+        message={`确定要删除「${selectedComment?.nickname}」的这条评论吗？该操作将从数据库中物理彻底删除，无法撤销。`}
         confirmText="确认删除"
         cancelText="取消"
         variant="danger"
@@ -112,7 +130,6 @@ function CommentsPageComponent() {
         <AdminCard variant="default" padding="lg" className={styles.commentsCard}>
           <CardHeader>
             <div className={styles.headerRow}>
-              <h2 className={styles.sectionTitle}>评论管理队列</h2>
               <div className={styles.filterGroup}>
                 {filterOptions.map((option) => (
                   <button
@@ -149,7 +166,11 @@ function CommentsPageComponent() {
                 <p className={styles.emptyText}>
                   {localFilter === 'ALL' 
                     ? '目前没有任何评论' 
-                    : `当前筛选条件下暂无${localFilter === 'PENDING' ? '待审核' : localFilter === 'APPROVED' ? '已批准' : '已删除'}评论`
+                    : localFilter === 'PENDING'
+                      ? (comments.some(c => c.status === 'APPROVED')
+                          ? '🍵 清净无事！当前所有的文章回复评论均已审核完毕。您可以切换至“已批准”查看历史评论。'
+                          : '目前没有任何待审核评论')
+                      : '当前筛选条件下暂无已批准评论'
                   }
                 </p>
               </div>
@@ -167,90 +188,77 @@ function CommentsPageComponent() {
                           {comment.nickname.charAt(0).toUpperCase()}
                         </div>
                         <div className={styles.authorInfo}>
-                          <span className={styles.authorName}>{comment.nickname}</span>
-                          <span className={styles.authorContact}>{comment.contact}</span>
+                          <div className={styles.authorMetaRow}>
+                            <span className={styles.authorName}>{comment.nickname}</span>
+                            <span className={styles.authorContact}>{comment.contact}</span>
+                          </div>
+                          <div className={styles.commentDetailsRow}>
+                            <span className={styles.locationInfo}>📍 {comment.location}</span>
+                            <span className={styles.ipInfo}>💻 IP: {comment.ip}</span>
+                            <span className={styles.timeInfo} suppressHydrationWarning>
+                              🕒 {formatToChineseDateTime(comment.createdAt)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div className={styles.commentMeta}>
-                        <span className={styles.statusBadge} data-status={comment.status}>
-                          {comment.status === 'PENDING' && (
-                            <>
-                              <IconClock size={12} className={styles.badgeIcon} />
-                              <span className={styles.badgeText}>待审核</span>
-                            </>
-                          )}
-                          {comment.status === 'APPROVED' && (
-                            <>
-                              <IconCheckCircle size={12} className={styles.badgeIcon} />
-                              <span className={styles.badgeText}>已批准</span>
-                            </>
-                          )}
-                          {comment.status === 'DELETED' && (
-                            <>
-                              <IconTrash size={12} className={styles.badgeIcon} />
-                              <span className={styles.badgeText}>已删除</span>
-                            </>
-                          )}
-                        </span>
+                        <a 
+                          href={`/posts/${comment.postSlug}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className={styles.commentPostRef}
+                          title="在新标签页中阅读该文章"
+                        >
+                          <IconLink size={12} className={styles.refIcon} />
+                          <span>关联文章：</span>
+                          <span className={styles.postSlug}>
+                            {postSlugToTitleMap[comment.postSlug] || comment.postSlug}
+                          </span>
+                        </a>
+
+                        <div className={styles.metaRightRow}>
+                          <span className={styles.statusBadge} data-status={comment.status}>
+                            {comment.status === 'PENDING' && (
+                              <>
+                                <IconClock size={12} className={styles.badgeIcon} />
+                                <span className={styles.badgeText}>待审核</span>
+                              </>
+                            )}
+                            {comment.status === 'APPROVED' && (
+                              <>
+                                <IconCheckCircle size={12} className={styles.badgeIcon} />
+                                <span className={styles.badgeText}>已批准</span>
+                              </>
+                            )}
+                          </span>
+
+                          <div className={styles.actionGroup}>
+                            {comment.status === 'PENDING' && (
+                              <Button
+                                variant="success"
+                                size="sm"
+                                loading={actionLoading === comment.id}
+                                icon={<IconCheck size={14} />}
+                                onClick={() => handleModerateComment(comment.id, 'APPROVE')}
+                              >
+                                通过
+                              </Button>
+                            )}
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              icon={<IconTrash size={14} />}
+                              onClick={() => handleDeleteClick(comment)}
+                            >
+                              删除
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     <div className={styles.commentBody}>
                       <p className={styles.commentContent}>{comment.content}</p>
-                      <div className={styles.commentPostRef}>
-                        <IconLink size={12} className={styles.refIcon} />
-                        <span>关联文章：</span>
-                        <span className={styles.postSlug}>{comment.postSlug}</span>
-                      </div>
-                    </div>
-
-                    <div className={styles.commentFooter}>
-                      <div className={styles.footerMeta}>
-                        <span className={styles.locationInfo}>
-                          地区: {comment.location}
-                        </span>
-                        <span className={styles.ipInfo}>
-                          IP: {comment.ip}
-                        </span>
-                        <span className={styles.timeInfo}>
-                          时间: {new Date(comment.createdAt).toLocaleString('zh-CN')}
-                        </span>
-                      </div>
-
-                      <div className={styles.actionGroup}>
-                        {comment.status === 'PENDING' && (
-                          <Button
-                            variant="success"
-                            size="sm"
-                            loading={actionLoading === comment.id}
-                            icon={<IconCheck size={14} />}
-                            onClick={() => handleModerateComment(comment.id, 'APPROVE')}
-                          >
-                            批准发布
-                          </Button>
-                        )}
-                        {comment.status === 'DELETED' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<IconCheck size={14} />}
-                            loading={actionLoading === comment.id}
-                            onClick={() => handleModerateComment(comment.id, 'RESTORE')}
-                          >
-                            恢复
-                          </Button>
-                        )}
-                        {comment.status !== 'DELETED' && (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            icon={<IconTrash size={14} />}
-                            onClick={() => handleDeleteClick(comment)}
-                          >
-                            删除
-                          </Button>
-                        )}
-                      </div>
                     </div>
                   </div>
                 ))}

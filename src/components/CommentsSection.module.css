@@ -1,0 +1,267 @@
+.container {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--glass-border);
+}
+
+.sectionTitle {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.count {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.mainFormWrapper {
+  margin-bottom: 3.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: 2rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px var(--glass-shadow);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.commentGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 评论节点卡片 */
+.commentNode {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow: 0 4px 20px var(--glass-shadow);
+  border-radius: var(--radius-md);
+  transition: var(--transition-smooth);
+}
+
+.commentNode:hover {
+  transform: scale(1.005) translateY(-2px);
+  border-color: rgba(8, 145, 178, 0.2);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.avatar svg {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.body {
+  flex: 1;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+}
+
+.nickname {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.location {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--glass-border);
+}
+
+.content {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.actions {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.likeBtn, .replyBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.likeBtn:hover {
+  color: var(--color-accent-2);
+  transform: translateY(-1px);
+}
+
+.liked {
+  color: var(--color-accent-2);
+}
+
+.replyBtn:hover {
+  color: var(--color-accent-1);
+  transform: translateY(-1px);
+}
+
+/* 嵌套二级回复 */
+.repliesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-left: 3rem; /* 嵌套层级缩进 */
+  border-left: 2px solid rgba(8, 145, 178, 0.15); /* 侧边连线 */
+  margin-left: 1.5rem;
+}
+
+.replyNode {
+  display: flex;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--glass-border);
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
+  transition: var(--transition-smooth);
+}
+
+.replyNode:hover {
+  border-color: var(--color-accent-2);
+}
+
+.replyBadge {
+  background: rgba(217, 70, 239, 0.1);
+  color: var(--color-accent-2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid rgba(217, 70, 239, 0.15);
+}
+
+/* 行内嵌套表单 */
+.inlineForm {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid rgba(8, 145, 178, 0.2);
+  box-shadow: inset 0 2px 8px rgba(15, 23, 42, 0.02);
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.replyToBadge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-accent-1);
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.cancelReply {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.cancelReply:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem 0;
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.empty {
+  text-align: center;
+  padding: 4rem 0;
+  color: var(--text-muted);
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .repliesList {
+    padding-left: 1.5rem;
+    margin-left: 0.75rem;
+  }
+  
+  .commentNode, .replyNode {
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .avatar {
+    width: 38px;
+    height: 38px;
+  }
+}

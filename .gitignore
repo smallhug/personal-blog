@@ -1,0 +1,62 @@
+# =========================================================================
+# 博客项目 Git 忽略文件配置 (.gitignore)
+# 针对 Next.js, React, Node.js, Prisma SQLite, TypeScript 进行了专项调优
+# =========================================================================
+
+# 依赖包目录 (Dependencies)
+node_modules/
+/.pnp
+.pnp.js
+
+# Next.js 构建输出与生产包 (Next.js Build Outputs)
+/.next/
+/out/
+/build/
+/dist/
+
+# 测试覆盖率报告 (Testing Coverage)
+/coverage/
+
+# 运行及调试日志 (Debug & Runtime Logs)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# 本地环境变量与敏感密钥密钥 (Environment Variables & Secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+
+# SQLite 本地数据库与日志 (Local SQLite DB & Logs for Prisma)
+*.db
+*.db-journal
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# 操作系统临时垃圾文件 (OS Temporary Files)
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# 常见编辑器与 IDE 专属配置 (IDE & Editors Configs)
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.classpath
+.project
+.settings/
+.vscode/settings.json
+!.vscode/extensions.json

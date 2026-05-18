@@ -1,0 +1,162 @@
+/* 基础骨架屏 */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 0%,
+    var(--bg-secondary) 50%,
+    var(--bg-tertiary) 100%
+  );
+  background-size: 200% 100%;
+  animation: admin-shimmer 1.5s infinite;
+  border-radius: var(--admin-radius-sm);
+}
+
+/* 变体样式 */
+.text {
+  border-radius: var(--admin-radius-sm);
+}
+
+.circular {
+  border-radius: 50%;
+}
+
+.rectangular {
+  border-radius: var(--admin-radius-sm);
+}
+
+/* 文章列表骨架屏 */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-4);
+}
+
+.articleItem {
+  background: var(--admin-bg-content);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-md);
+  padding: var(--admin-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-4);
+}
+
+.articleHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-3);
+}
+
+.articleMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-2);
+}
+
+.articleContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-2);
+}
+
+/* 评论卡片骨架屏 */
+.commentGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-4);
+}
+
+.commentCard {
+  background: var(--admin-bg-content);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-md);
+  padding: var(--admin-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-4);
+}
+
+.commentHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-3);
+}
+
+.commentBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-2);
+}
+
+.commentFooter {
+  display: flex;
+  align-items: center;
+  margin-top: auto;
+  padding-top: var(--admin-space-4);
+  border-top: 1px solid var(--admin-border-subtle);
+}
+
+/* 编辑器骨架屏 */
+.editorContainer {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--admin-space-6);
+  min-height: 500px;
+}
+
+.metaPanel {
+  background: var(--admin-bg-content);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-md);
+  padding: var(--admin-space-6);
+  display: flex;
+  flex-direction: column;
+}
+
+.writePanel {
+  background: var(--admin-bg-content);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.toolbarSkeleton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--admin-space-4) var(--admin-space-6);
+  border-bottom: 1px solid var(--admin-border-subtle);
+  background: var(--bg-tertiary);
+}
+
+/* 统计看板骨架屏 */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--admin-space-6);
+}
+
+.statCard {
+  background: var(--admin-bg-content);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-md);
+  padding: var(--admin-space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--admin-space-3);
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .editorContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}

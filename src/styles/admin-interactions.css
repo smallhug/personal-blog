@@ -1,0 +1,269 @@
+/* ===================================
+   管理后台微交互增强样式
+   统一的动画、过渡和视觉反馈
+   =================================== */
+
+/* ---- 页面切换过渡动画 ---- */
+.admin-page-transition {
+  animation: admin-fadeIn var(--admin-transition-base) ease-out;
+}
+
+.admin-page-transition-exit {
+  animation: admin-fadeOut var(--admin-transition-fast) ease-in forwards;
+}
+
+@keyframes admin-fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* ---- 列表项交错动画 ---- */
+.stagger-children > * {
+  opacity: 0;
+  animation: admin-slideInUp var(--admin-transition-slow) ease-out forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+.stagger-children > *:nth-child(9) { animation-delay: 400ms; }
+.stagger-children > *:nth-child(10) { animation-delay: 450ms; }
+
+/* ---- 按钮涟漪效果增强 ---- */
+.btn-ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple-effect::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+}
+
+.btn-ripple-effect:active::after {
+  transform: scale(0, 0);
+  opacity: 1;
+  transition: 0s;
+}
+
+/* ---- 输入框焦点动画 ---- */
+.input-focus-animate {
+  position: relative;
+}
+
+.input-focus-animate::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--admin-color-primary);
+  transition: width var(--admin-transition-base);
+}
+
+.input-focus-animate:focus-within::after,
+.input-focus-animate:focus::after {
+  width: 100%;
+}
+
+/* ---- 卡片悬停提升效果 ---- */
+.card-hover-lift {
+  transition: all var(--admin-transition-base);
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--admin-shadow-lg);
+}
+
+/* ---- 数字跳动动画（用于统计数字变化） ---- */
+.number-bounce {
+  display: inline-block;
+  animation: numberBounce 0.3s ease-out;
+}
+
+@keyframes numberBounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+    color: var(--admin-color-primary);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---- 加载状态脉冲 ---- */
+.loading-pulse {
+  animation: admin-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ---- 成功/错误状态闪烁 ---- */
+.status-flash-success {
+  animation: statusFlashSuccess 0.6s ease-out;
+}
+
+.status-flash-error {
+  animation: statusFlashError 0.6s ease-out;
+}
+
+@keyframes statusFlashSuccess {
+  0% { 
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); 
+  }
+  70% { 
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); 
+  }
+  100% { 
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); 
+  }
+}
+
+@keyframes statusFlashError {
+  0% { 
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); 
+  }
+  70% { 
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); 
+  }
+  100% { 
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); 
+  }
+}
+
+/* ---- 工具提示动画 ---- */
+.tooltip-animate {
+  animation: tooltipIn var(--admin-transition-fast) ease-out;
+}
+
+@keyframes tooltipIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---- 侧边栏导航指示器滑动效果 ---- */
+.nav-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: var(--admin-color-primary);
+  border-radius: 0 2px 2px 0;
+  transition: transform var(--admin-transition-base), opacity var(--admin-transition-base);
+  opacity: 0;
+}
+
+.nav-item-active .nav-indicator {
+  opacity: 1;
+}
+
+/* ---- 滚动条美化增强 ---- */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--admin-border-subtle);
+  border-radius: 3px;
+  transition: background var(--admin-transition-fast);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-text-auxiliary);
+}
+
+/* ---- 拖拽区域激活态 ---- */
+.drop-zone-active {
+  border-color: var(--admin-color-primary) !important;
+  background: var(--admin-color-primary-light) !important;
+  animation: dropZonePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dropZonePulse {
+  0%, 100% {
+    border-color: var(--admin-color-primary);
+    background: var(--admin-color-primary-light);
+  }
+  50% {
+    border-color: var(--admin-color-primary-hover);
+    background: rgba(8, 145, 178, 0.12);
+  }
+}
+
+/* ---- 空状态插图动画 ---- */
+.empty-state-icon {
+  font-size: 3rem;
+  animation: emptyFloat 3s ease-in-out infinite;
+}
+
+@keyframes emptyFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ---- 进度条动画 ---- */
+.progress-bar-animated {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+  animation: progressStripes 1s linear infinite;
+}
+
+@keyframes progressStripes {
+  from {
+    background-position: 1rem 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}

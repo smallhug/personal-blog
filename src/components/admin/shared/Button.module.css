@@ -1,0 +1,158 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--admin-space-2);
+  font-family: var(--font-primary);
+  font-weight: 600;
+  border-radius: var(--admin-radius-sm);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all var(--admin-transition-fast);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* 变体样式 */
+.primary {
+  background: var(--admin-color-primary);
+  color: var(--admin-text-inverse);
+  box-shadow: 0 1px 2px rgba(8, 145, 178, 0.2);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--admin-color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.25);
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.secondary {
+  background: var(--admin-bg-content);
+  color: var(--admin-text-primary);
+  border: 1px solid var(--admin-border-subtle);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--admin-text-auxiliary);
+  transform: translateY(-1px);
+}
+
+.danger {
+  background: transparent;
+  color: var(--admin-color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--admin-color-danger-light);
+  border-color: var(--admin-color-danger);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--admin-text-secondary);
+  border: none;
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--admin-text-primary);
+}
+
+.success {
+  background: var(--admin-color-success);
+  color: var(--admin-text-inverse);
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
+}
+
+.success:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+/* 尺寸样式 */
+.sm {
+  padding: var(--admin-space-2) var(--admin-space-3);
+  font-size: var(--admin-font-xs);
+  min-height: 28px;
+}
+
+.md {
+  padding: var(--admin-space-3) var(--admin-space-4);
+  font-size: var(--admin-font-sm);
+  min-height: 36px;
+}
+
+.lg {
+  padding: var(--admin-space-4) var(--admin-space-6);
+  font-size: var(--admin-font-base);
+  min-height: 44px;
+}
+
+/* 状态修饰 */
+.fullWidth {
+  width: 100%;
+}
+
+.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.iconOnly {
+  padding: var(--admin-space-3);
+  min-width: auto;
+}
+
+/* 内部元素 */
+.spinner {
+  animation: admin-spin 1s linear infinite;
+  font-size: 0.9em;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+/* 涟漪效果 */
+.button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10%);
+  transform: scale(10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+  border-radius: inherit;
+}
+
+.button:active::after {
+  transform: scale(0);
+  opacity: 1;
+  transition: 0s;
+}

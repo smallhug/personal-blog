@@ -1,0 +1,63 @@
+/* ===================================
+   管理后台主布局样式
+   新架构：TopBar + (Sidebar | Content)
+   =================================== */
+
+/* 主容器：垂直布局 */
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* 精确充满父级 main-content 除去顶栏后的高度 */
+  width: 100%;
+  overflow: hidden; /* 骨架本身决不溢出 */
+  background: var(--admin-bg-content);
+  position: relative;
+}
+
+/* 遮罩层（移动端） */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: calc(var(--admin-z-modal) - 1);
+  animation: admin-fadeIn var(--admin-transition-fast) ease-out;
+}
+
+/* ===== 下方区域：左右分栏 ===== */
+.body {
+  display: flex;
+  flex: 1;
+  height: 0; /* 核心 Flexbox 高度圣杯！锁定分栏高度不被内容撑高，完美激活右侧 content 的局部滚动条 */
+  overflow: hidden; /* 彻底防止内容溢出 */
+}
+
+/* 右侧主内容区 */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--admin-space-8) var(--admin-space-8) var(--admin-space-12);
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  background: var(--admin-bg-content);
+  transition: all var(--admin-transition-base);
+  animation: admin-fadeIn var(--admin-transition-base) ease-out;
+}
+
+/* 响应式适配 */
+@media (max-width: 1024px) {
+  .content {
+    padding: var(--admin-space-6) var(--admin-space-6) var(--admin-space-10);
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: var(--admin-space-4) var(--admin-space-4) var(--admin-space-8);
+    width: 100%;
+  }
+
+  .body {
+    flex-direction: column; /* 移动端改为上下布局 */
+  }
+}

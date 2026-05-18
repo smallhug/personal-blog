@@ -1,0 +1,44 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  parentId  String?
+  postSlug  String
+  content   String
+  nickname  String
+  contact   String
+  avatar    String    // Contains the SVG pixel art data representing the user
+  ip        String
+  location  String    // Resolved geographical location
+  likes     Int       @default(0)
+  createdAt DateTime  @default(now())
+  status    String    @default("PENDING") // PENDING, APPROVED, DELETED
+
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@index([postSlug])
+  @@index([parentId])
+}
+
+model PostView {
+  slug  String @id
+  views Int    @default(0)
+}
+
+model PostIpView {
+  id        String   @id @default(uuid())
+  slug      String
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@unique([slug, ip])
+  @@index([slug])
+}

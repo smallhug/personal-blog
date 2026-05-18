@@ -120,7 +120,7 @@
   font-size: var(--admin-font-sm);
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--admin-transition-fast);
+  transition: background var(--admin-transition-fast), color var(--admin-transition-fast);
   position: relative;
   text-align: left;
   white-space: nowrap;

@@ -46,7 +46,7 @@ export default function HomeContainer({ initialPosts, tags, commentCounts = {}, 
     setCurrentPage(1);
   };
 
-  // 2. 筛选博文
+  // 2. 筛选文章
   const filteredPosts = initialPosts.filter((post) => {
     if (post.status !== 'PUBLISHED') return false;
 

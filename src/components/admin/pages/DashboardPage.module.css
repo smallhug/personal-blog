@@ -1,7 +1,7 @@
 .container {
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  flex-direction: row;
+  gap: 1.5rem;
   padding: 1.5rem 0.5rem;
   height: 100%;
   overflow-y: auto;
@@ -16,6 +16,22 @@
 .container::-webkit-scrollbar-thumb {
   background-color: rgba(15, 118, 110, 0.3);
   border-radius: 4px;
+}
+
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mainContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 /* 顶部标题与问候 */
@@ -38,21 +54,21 @@
   color: var(--text-secondary);
 }
 
-/* 顶层四大指标网格 */
+/* 指标卡片列表 */
 .metricsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .metricCard {
   background: var(--bg-glass-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
-  padding: 1.5rem;
+  padding: 1rem;
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
   box-shadow: var(--shadow-sm);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -60,7 +76,7 @@
 }
 
 .metricCard:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   border-color: rgba(15, 118, 110, 0.4);
   box-shadow: 0 8px 24px rgba(15, 118, 110, 0.15);
 }
@@ -70,15 +86,15 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-accent-1), transparent);
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--color-accent-1), transparent);
   opacity: 0.8;
 }
 
 .metricIcon {
-  width: 3.25rem;
-  height: 3.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -98,20 +114,42 @@
 .metricInfo {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .metricValue {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
 .metricLabel {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   font-weight: 500;
-  margin-top: 0.25rem;
+  margin-top: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metricCardPending {
+  cursor: pointer;
+}
+
+.metricIconUv {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+}
+
+.metricIconWarning {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.metricValueWarning {
+  color: #ef4444;
 }
 
 /* 图表容器 */
@@ -167,9 +205,9 @@
   background-color: #38bdf8;
 }
 
-/* 动感手绘 SVG 图层 */
 .svgWrapper {
   width: 100%;
+  min-height: 220px;
   height: 220px;
   position: relative;
 }
@@ -178,6 +216,54 @@
   width: 100%;
   height: 100%;
   overflow: visible;
+  display: block;
+}
+
+.gridLine {
+  stroke: var(--admin-border-subtle, rgba(255, 255, 255, 0.08));
+  stroke-dasharray: 4 4;
+}
+
+.gridLabel {
+  fill: var(--text-secondary, #94a3b8);
+  font-size: 9px;
+  text-anchor: end;
+  opacity: 0.6;
+}
+
+.axisLabel {
+  fill: var(--text-secondary, #94a3b8);
+  font-size: 9px;
+  text-anchor: middle;
+  opacity: 0.7;
+}
+
+.hoverLine {
+  stroke: var(--admin-border-subtle, rgba(255, 255, 255, 0.15));
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  pointer-events: none;
+}
+
+.hitArea {
+  cursor: pointer;
+}
+
+.chartEmpty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.chartEmpty span:first-child {
+  font-size: 2rem;
+  opacity: 0.5;
 }
 
 .chartTooltip {
@@ -194,8 +280,8 @@
   flex-direction: column;
   gap: 0.25rem;
   z-index: 10;
-  transition: opacity 0.15s ease, transform 0.15s ease;
   backdrop-filter: blur(8px);
+  white-space: nowrap;
 }
 
 .tooltipDate {
@@ -203,6 +289,23 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 0.25rem;
   margin-bottom: 0.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.chartTooltip span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tooltipPv {
+  color: var(--color-accent-1);
+}
+
+.tooltipUv {
+  color: #38bdf8;
 }
 
 /* 下部双栏排版 */
@@ -305,6 +408,9 @@
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 /* 评论大卡 */
@@ -364,6 +470,10 @@
   gap: 0.5rem;
 }
 
+.emptyIcon {
+  opacity: 0.5;
+}
+
 /* 骨架屏加载 */
 .loadingContainer {
   display: flex;
@@ -388,5 +498,41 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0.5rem;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .metricsGrid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .metricCard {
+    flex: 1 1 calc(50% - 0.75rem);
+    min-width: 140px;
+  }
+
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .svgWrapper {
+    min-height: 180px;
+    height: 180px;
   }
 }

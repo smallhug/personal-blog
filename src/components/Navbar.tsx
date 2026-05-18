@@ -77,7 +77,7 @@ export default function Navbar() {
           </a>
 
           <a 
-            href="https://github.com" 
+            href="https://github.com/smallhug" 
             target="_blank" 
             rel="noreferrer" 
             className={styles.githubLink} 

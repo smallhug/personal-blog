@@ -4,12 +4,12 @@ import matter from 'gray-matter';
 
 const postsDirectory = path.join(process.cwd(), 'content/posts');
 
-// 确保目录存在并在首次启动时自动写入欢迎博文，以防空数据报错
+// 确保目录存在并在首次启动时自动写入欢迎文章，以防空数据报错
 export function ensureDirectoryExists() {
   if (!fs.existsSync(postsDirectory)) {
     fs.mkdirSync(postsDirectory, { recursive: true });
     
-    // 写入第一篇极具质感的欢迎博文
+    // 写入第一篇极具质感的欢迎文章
     const seedPost = `---
 title: "虫虫OvO的数字空间：科技与艺术的重构边界"
 slug: "technology-and-art-oasis"

@@ -1,14 +1,17 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo, useId } from 'react';
 import { useAdmin } from '../shared/AdminContext';
 import styles from './DashboardPage.module.css';
 import {
   IconPen,
   IconEye,
   IconMessage,
-  IconArrowRight,
-  IconPencil
+  IconChartBar,
+  IconCalendar,
+  IconUser,
+  IconFire,
+  IconCoffee
 } from '../icons';
 
 interface DashboardData {
@@ -38,15 +41,14 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const { adminToken, setActivePage, setEditSlug } = useAdmin();
+  const { adminToken, setActivePage } = useAdmin();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // 测量容器尺寸状态，实现 1:1 物理像素完美高清渲染
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 600, height: 220 });
 
-  // 交互悬浮 Tooltip 状态
+  const chartId = useId();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [chartWidth, setChartWidth] = useState(0);
+  
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
     x: number;
@@ -55,22 +57,20 @@ export default function DashboardPage() {
     pv: number;
     uv: number;
   } | null>(null);
+  
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // 1. 注册 ResizeObserver 动态获取容器的物理分辨率，自适应全屏或窗口缩放
   useEffect(() => {
     if (!containerRef.current) return;
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const { width, height } = entry.contentRect;
-        setDimensions({
-          width: width || 600,
-          height: height || 220
-        });
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) setChartWidth(w);
       }
     });
-    resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
-  }, [loading, data]); // 当加载状态变更或数据刷新时，重新核验容器
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const fetchDashboardStats = useCallback(async () => {
     try {
@@ -95,6 +95,75 @@ export default function DashboardPage() {
     fetchDashboardStats();
   }, [fetchDashboardStats]);
 
+  const metrics = data?.metrics;
+  const trends = data?.trends;
+  const recentComments = data?.recentComments;
+  const topPosts = data?.topPosts;
+
+  const hasTrendData = trends && trends.labels.length > 0 && (trends.pvs.some(v => v > 0) || trends.uvs.some(v => v > 0));
+
+  const W = chartWidth || 800;
+  const H = 220;
+  const padX = 40;
+  const padY = 30;
+
+  const niceMax = useMemo(() => {
+    if (!trends) return 10;
+    const raw = Math.max(...trends.pvs, ...trends.uvs, 10);
+    if (raw <= 10) return 10;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(raw)));
+    const normalized = raw / magnitude;
+    if (normalized <= 1) return magnitude;
+    if (normalized <= 2) return 2 * magnitude;
+    if (normalized <= 5) return 5 * magnitude;
+    return Math.ceil(normalized) * magnitude;
+  }, [trends]);
+
+  const chartData = useMemo(() => {
+    if (!trends) return null;
+    const toPoints = (values: number[]) => values.map((val, idx) => {
+      const x = padX + (idx * (W - padX * 2)) / (trends.labels.length - 1 || 1);
+      const y = H - padY - (val * (H - padY * 2)) / niceMax;
+      return { x, y, val };
+    });
+
+    const pvPts = toPoints(trends.pvs);
+    const uvPts = toPoints(trends.uvs);
+
+    const genSpline = (points: Array<{ x: number; y: number }>) => {
+      let d = '';
+      points.forEach((p, idx) => {
+        if (idx === 0) {
+          d += `M ${p.x} ${p.y}`;
+        } else {
+          const prev = points[idx - 1];
+          const cp1x = prev.x + (p.x - prev.x) / 2;
+          const cp2x = prev.x + (p.x - prev.x) / 2;
+          d += ` C ${cp1x} ${prev.y}, ${cp2x} ${p.y}, ${p.x} ${p.y}`;
+        }
+      });
+      return d;
+    };
+
+    const genArea = (pathD: string, points: Array<{ x: number; y: number }>) => {
+      if (!pathD) return '';
+      return `${pathD} L ${points[points.length - 1].x} ${H - padY} L ${points[0].x} ${H - padY} Z`;
+    };
+
+    const pvPath = genSpline(pvPts);
+    const uvPath = genSpline(uvPts);
+
+    return {
+      pvPoints: pvPts,
+      uvPoints: uvPts,
+      pvPathD: pvPath,
+      uvPathD: uvPath,
+      pvAreaD: genArea(pvPath, pvPts),
+      uvAreaD: genArea(uvPath, uvPts),
+      xPositions: trends.labels.map((_, idx) => padX + (idx * (W - padX * 2)) / (trends.labels.length - 1 || 1)),
+    };
+  }, [trends, niceMax, W]);
+
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -104,7 +173,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!data) {
+  if (!data || !metrics || !trends || !recentComments || !topPosts || !chartData) {
     return (
       <div className={styles.emptyState}>
         <span>⚠️ 看板数据归集失败，请尝试刷新。</span>
@@ -112,112 +181,58 @@ export default function DashboardPage() {
     );
   }
 
-  const { metrics, trends, recentComments, topPosts } = data;
-
-  // --- SVG 平滑样条曲线几何点生成算法 (物理像素点对点自适应) ---
-  const W = dimensions.width;
-  const H = dimensions.height;
-  const padX = 40;
-  const padY = 30; // 留出底边时间标注和顶边最高点的安全空白
-
-  // 找出 PV 和 UV 中的最大值作为 Y 轴上限
-  const maxVal = Math.max(...trends.pvs, ...trends.uvs, 10); // 至少为 10 防零除
-
-  // 转换 PV 坐标点
-  const pvPoints = trends.pvs.map((val, idx) => {
-    const x = padX + (idx * (W - padX * 2)) / (trends.labels.length - 1);
-    const y = H - padY - (val * (H - padY * 2)) / maxVal;
-    return { x, y, val };
-  });
-
-  // 转换 UV 坐标点
-  const uvPoints = trends.uvs.map((val, idx) => {
-    const x = padX + (idx * (W - padX * 2)) / (trends.labels.length - 1);
-    const y = H - padY - (val * (H - padY * 2)) / maxVal;
-    return { x, y, val };
-  });
-
-  // 立方贝塞尔样条生成器
-  const generateSplineD = (points: Array<{ x: number; y: number }>) => {
-    let d = '';
-    points.forEach((p, idx) => {
-      if (idx === 0) {
-        d += `M ${p.x} ${p.y}`;
-      } else {
-        const prev = points[idx - 1];
-        const cp1x = prev.x + (p.x - prev.x) / 2;
-        const cp1y = prev.y;
-        const cp2x = prev.x + (p.x - prev.x) / 2;
-        const cp2y = p.y;
-        d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p.x} ${p.y}`;
-      }
-    });
-    return d;
-  };
-
-  const pvPathD = generateSplineD(pvPoints);
-  const uvPathD = generateSplineD(uvPoints);
-
-  // 面积填充封闭路径生成器
-  const generateAreaD = (pathD: string, points: Array<{ x: number; y: number }>) => {
-    if (!pathD) return '';
-    return `${pathD} L ${points[points.length - 1].x} ${H - padY} L ${points[0].x} ${H - padY} Z`;
-  };
-
-  const pvAreaD = generateAreaD(pvPathD, pvPoints);
-  const uvAreaD = generateAreaD(uvPathD, uvPoints);
-
   return (
     <div className={styles.container}>
-      {/* 四大指标卡片 */}
-      <div className={styles.metricsGrid}>
-        <div className={styles.metricCard}>
-          <div className={styles.metricIcon}>
-            <IconPen size={22} />
+      <div className={styles.sidebar}>
+        <div className={styles.metricsGrid}>
+          <div className={styles.metricCard}>
+            <div className={styles.metricIcon}>
+              <IconPen size={22} />
+            </div>
+            <div className={styles.metricInfo}>
+              <span className={styles.metricValue}>{metrics.totalPosts}</span>
+              <span className={styles.metricLabel}>全站文章总数</span>
+            </div>
           </div>
-          <div className={styles.metricInfo}>
-            <span className={styles.metricValue}>{metrics.totalPosts}</span>
-            <span className={styles.metricLabel}>全站博文总数</span>
-          </div>
-        </div>
 
-        <div className={styles.metricCard}>
-          <div className={styles.metricIcon}>
-            <IconEye size={22} />
+          <div className={styles.metricCard}>
+            <div className={styles.metricIcon}>
+              <IconEye size={22} />
+            </div>
+            <div className={styles.metricInfo}>
+              <span className={styles.metricValue}>{metrics.totalViews}</span>
+              <span className={styles.metricLabel}>累计阅读量 (PV)</span>
+            </div>
           </div>
-          <div className={styles.metricInfo}>
-            <span className={styles.metricValue}>{metrics.totalViews}</span>
-            <span className={styles.metricLabel}>累计阅读量 (PV)</span>
-          </div>
-        </div>
 
-        <div className={styles.metricCard}>
-          <div className={styles.metricIcon} style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8' }}>
-            <IconPencil size={20} />
+          <div className={styles.metricCard}>
+            <div className={`${styles.metricIcon} ${styles.metricIconUv}`}>
+              <IconEye size={20} />
+            </div>
+            <div className={styles.metricInfo}>
+              <span className={styles.metricValue}>{metrics.totalUv}</span>
+              <span className={styles.metricLabel}>独立访客量 (UV)</span>
+            </div>
           </div>
-          <div className={styles.metricInfo}>
-            <span className={styles.metricValue}>{metrics.totalUv}</span>
-            <span className={styles.metricLabel}>独立访客量 (UV)</span>
-          </div>
-        </div>
 
-        <div className={styles.metricCard} onClick={() => setActivePage('comments')} style={{ cursor: 'pointer' }}>
-          <div className={styles.metricIcon} style={{ background: metrics.pendingComments > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(15, 118, 110, 0.1)', color: metrics.pendingComments > 0 ? '#ef4444' : 'var(--color-accent-1)' }}>
-            <IconMessage size={20} />
-          </div>
-          <div className={styles.metricInfo}>
-            <span className={styles.metricValue} style={{ color: metrics.pendingComments > 0 ? '#ef4444' : 'var(--text-primary)' }}>
-              {metrics.pendingComments}
-            </span>
-            <span className={styles.metricLabel}>待审核评论数</span>
+          <div className={`${styles.metricCard} ${styles.metricCardPending}`} onClick={() => setActivePage('comments')}>
+            <div className={`${styles.metricIcon} ${metrics.pendingComments > 0 ? styles.metricIconWarning : ''}`}>
+              <IconMessage size={20} />
+            </div>
+            <div className={styles.metricInfo}>
+              <span className={`${styles.metricValue} ${metrics.pendingComments > 0 ? styles.metricValueWarning : ''}`}>
+                {metrics.pendingComments}
+              </span>
+              <span className={styles.metricLabel}>待审核评论数</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 近 7 日趋势 SVG 数据图表 */}
-      <div className={styles.chartSection}>
+      <div className={styles.mainContent}>
+        <div className={styles.chartSection}>
         <div className={styles.chartHeader}>
-          <h3 className={styles.chartTitle}>📈 近 7 日流量趋势统计</h3>
+          <h3 className={styles.chartTitle}><IconChartBar size={16} /> 近 7 日流量趋势统计</h3>
           <div className={styles.chartLegend}>
             <div className={styles.legendItem}>
               <div className={`${styles.legendColor} ${styles.pvColor}`} />
@@ -230,154 +245,128 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 动态分辨率测量与原生像素比对的高清 SVG 图表区 */}
-        <div className={styles.svgWrapper} ref={containerRef}>
-          <svg 
-            width={W} 
-            height={H} 
-            style={{ overflow: 'visible', display: 'block' }}
-          >
-            <defs>
-              {/* 松石青渐变 */}
-              <linearGradient id="pvGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-accent-1)" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="var(--color-accent-1)" stopOpacity="0.00" />
-              </linearGradient>
-              {/* 碧蓝渐变 */}
-              <linearGradient id="uvGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.00" />
-              </linearGradient>
-            </defs>
-
-            {/* 水平网格虚线网格背景 */}
-            {[0, 0.25, 0.5, 0.75, 1].map((r, i) => {
-              const y = padY + r * (H - padY * 2);
-              const gridVal = Math.round(maxVal - r * maxVal);
-              return (
-                <g key={i}>
-                  <line
-                    x1={padX}
-                    y1={y}
-                    x2={W - padX}
-                    y2={y}
-                    stroke="rgba(255, 255, 255, 0.05)"
-                    strokeDasharray="4 4"
-                  />
-                  <text
-                    x={padX - 10}
-                    y={y + 4}
-                    fill="var(--text-secondary)"
-                    fontSize="9"
-                    textAnchor="end"
-                    opacity="0.6"
-                  >
-                    {gridVal}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* PV 面积与曲线 */}
-            <path d={pvAreaD} fill="url(#pvGrad)" />
-            <path d={pvPathD} fill="none" stroke="var(--color-accent-1)" strokeWidth="2.5" strokeLinecap="round" />
-
-            {/* UV 面积与曲线 */}
-            <path d={uvAreaD} fill="url(#uvGrad)" />
-            <path d={uvPathD} fill="none" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" />
-
-            {/* 底部日期轴标注 */}
-            {trends.labels.map((lbl, idx) => {
-              const x = padX + (idx * (W - padX * 2)) / (trends.labels.length - 1);
-              return (
-                <text
-                  key={idx}
-                  x={x}
-                  y={H - 6}
-                  fill="var(--text-secondary)"
-                  fontSize="9"
-                  textAnchor="middle"
-                  opacity="0.7"
-                >
-                  {lbl}
-                </text>
-              );
-            })}
-
-            {/* 数据交互节点（圆圈） */}
-            {pvPoints.map((p, idx) => (
-              <circle
-                key={`pv-dot-${idx}`}
-                cx={p.x}
-                cy={p.y}
-                r="4.5"
-                fill="var(--bg-body)"
-                stroke="var(--color-accent-1)"
-                strokeWidth="2.5"
-                style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
-                onMouseEnter={(e) => {
-                  setTooltip({
-                    visible: true,
-                    x: p.x,
-                    y: p.y - 12,
-                    date: trends.labels[idx],
-                    pv: p.val,
-                    uv: trends.uvs[idx],
-                  });
-                }}
-                onMouseLeave={() => setTooltip(null)}
-              />
-            ))}
-
-            {/* UV 圆圈数据交互 */}
-            {uvPoints.map((p, idx) => (
-              <circle
-                key={`uv-dot-${idx}`}
-                cx={p.x}
-                cy={p.y}
-                r="4.5"
-                fill="var(--bg-body)"
-                stroke="#38bdf8"
-                strokeWidth="2.5"
-                style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
-                onMouseEnter={(e) => {
-                  setTooltip({
-                    visible: true,
-                    x: p.x,
-                    y: p.y - 12,
-                    date: trends.labels[idx],
-                    pv: trends.pvs[idx],
-                    uv: p.val,
-                  });
-                }}
-                onMouseLeave={() => setTooltip(null)}
-              />
-            ))}
-          </svg>
-
-          {/* 看板 Tooltip */}
-          {tooltip && tooltip.visible && (
-            <div
-              className={styles.chartTooltip}
-              style={{
-                left: `${(tooltip.x / W) * 100}%`,
-                top: `${(tooltip.y / H) * 100}%`,
-                transform: 'translate(-50%, -100%)',
-              }}
-            >
-              <span className={styles.tooltipDate}>📅 {tooltip.date}</span>
-              <span>👁️ 阅读数 (PV): <strong style={{ color: 'var(--color-accent-1)' }}>{tooltip.pv}</strong></span>
-              <span>👤 独立 IP (UV): <strong style={{ color: '#38bdf8' }}>{tooltip.uv}</strong></span>
+        <div
+          className={styles.svgWrapper}
+          ref={containerRef}
+          onMouseLeave={() => { setTooltip(null); setHoveredIndex(null); }}
+        >
+          {!hasTrendData ? (
+            <div className={styles.chartEmpty}>
+              <IconChartBar size={32} />
+              <span>暂无流量数据</span>
             </div>
+          ) : (
+            <>
+              <svg viewBox={`0 0 ${W} ${H}`} className={styles.svgElement}>
+                <defs>
+                  <linearGradient id={`${chartId}-pvGrad`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-accent-1)" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="var(--color-accent-1)" stopOpacity="0.00" />
+                  </linearGradient>
+                  <linearGradient id={`${chartId}-uvGrad`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.00" />
+                  </linearGradient>
+                </defs>
+
+                {[0, 0.25, 0.5, 0.75, 1].map((r, i) => {
+                  const y = padY + r * (H - padY * 2);
+                  const gridVal = Math.round(niceMax - r * niceMax);
+                  return (
+                    <g key={i}>
+                      <line x1={padX} y1={y} x2={W - padX} y2={y} className={styles.gridLine} />
+                      <text x={padX - 10} y={y + 4} className={styles.gridLabel}>
+                        {gridVal}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                {hoveredIndex !== null && (
+                  <line
+                    x1={chartData.xPositions[hoveredIndex]}
+                    y1={padY}
+                    x2={chartData.xPositions[hoveredIndex]}
+                    y2={H - padY}
+                    className={styles.hoverLine}
+                  />
+                )}
+
+                <path d={chartData.pvAreaD} fill={`url(#${chartId}-pvGrad)`} />
+                <path d={chartData.pvPathD} fill="none" stroke="var(--color-accent-1)" strokeWidth="2.5" strokeLinecap="round" />
+
+                <path d={chartData.uvAreaD} fill={`url(#${chartId}-uvGrad)`} />
+                <path d={chartData.uvPathD} fill="none" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" />
+
+                {trends.labels.map((lbl, idx) => (
+                  <text key={idx} x={chartData.xPositions[idx]} y={H - 6} className={styles.axisLabel}>
+                    {lbl}
+                  </text>
+                ))}
+
+                {hoveredIndex !== null && (
+                  <>
+                    <circle cx={chartData.pvPoints[hoveredIndex].x} cy={chartData.pvPoints[hoveredIndex].y} r="5" fill="var(--bg-body)" stroke="var(--color-accent-1)" strokeWidth="2.5" />
+                    <circle cx={chartData.uvPoints[hoveredIndex].x} cy={chartData.uvPoints[hoveredIndex].y} r="5" fill="var(--bg-body)" stroke="#38bdf8" strokeWidth="2.5" />
+                  </>
+                )}
+
+                {chartData.pvPoints.map((p, idx) => (
+                  <rect
+                    key={`pv-hit-${idx}`}
+                    x={p.x - (W / trends.labels.length) / 2}
+                    y={padY}
+                    width={W / trends.labels.length}
+                    height={H - padY * 2}
+                    fill="transparent"
+                    className={styles.hitArea}
+                    onMouseEnter={() => {
+                      setHoveredIndex(idx);
+                      const tx = Math.max(60, Math.min(p.x, W - 60));
+                      const ty = Math.min(p.y, chartData.uvPoints[idx].y) - 12;
+                      setTooltip({
+                        visible: true,
+                        x: tx,
+                        y: ty,
+                        date: trends.labels[idx],
+                        pv: p.val,
+                        uv: trends.uvs[idx],
+                      });
+                    }}
+                  />
+                ))}
+              </svg>
+
+              {tooltip && tooltip.visible && (
+                <div
+                  className={styles.chartTooltip}
+                  style={{
+                    left: `${(tooltip.x / W) * 100}%`,
+                    top: `${tooltip.y}px`,
+                    transform: 'translate(-50%, -100%)',
+                  }}
+                >
+                  <span className={styles.tooltipDate}>
+                    <IconCalendar size={12} /> {tooltip.date}
+                  </span>
+                  <span>
+                    <IconEye size={12} /> 阅读数 (PV): <strong className={styles.tooltipPv}>{tooltip.pv}</strong>
+                  </span>
+                  <span>
+                    <IconUser size={12} /> 独立 IP (UV): <strong className={styles.tooltipUv}>{tooltip.uv}</strong>
+                  </span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* 下方双栏排版：最高阅读与近期评论 */}
-      <div className={styles.bottomGrid}>
+        {/* 下方双栏排版：最高阅读与近期评论 */}
+        <div className={styles.bottomGrid}>
         {/* 左栏：阅读最高排行榜 */}
         <div className={styles.tableCard}>
-          <h3 className={styles.cardTitle}>🔥 博文阅读热度排行</h3>
+          <h3 className={styles.cardTitle}><IconFire size={16} /> 阅读热度排行</h3>
           <div className={styles.topList}>
             {topPosts.length > 0 ? (
               topPosts.map((post, idx) => (
@@ -388,24 +377,14 @@ export default function DashboardPage() {
                   <span className={styles.itemTitle} title={post.title}>
                     {post.title}
                   </span>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <button 
-                      onClick={() => {
-                        setEditSlug(post.slug);
-                        setActivePage('write');
-                      }} 
-                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                      title="立即编辑"
-                    >
-                      <IconPencil size={14} />
-                    </button>
-                    <span className={styles.itemViews}>👁️ {post.views} 次阅读</span>
-                  </div>
+                  <span className={styles.itemViews}>
+                      <IconEye size={12} /> {post.views} 次阅读
+                    </span>
                 </div>
               ))
             ) : (
               <div className={styles.emptyState}>
-                <span>暂时没有阅读量排行，快去宣传分享博文吧～</span>
+                <span>暂时没有阅读量排行，快去宣传分享文章吧～</span>
               </div>
             )}
           </div>
@@ -413,13 +392,15 @@ export default function DashboardPage() {
 
         {/* 右栏：近期评论 */}
         <div className={styles.tableCard}>
-          <h3 className={styles.cardTitle}>💬 最新待审核评论</h3>
+          <h3 className={styles.cardTitle}><IconMessage size={16} /> 最新待审核评论</h3>
           <div className={styles.commentList}>
             {recentComments.length > 0 ? (
               recentComments.map((comment) => (
                 <div key={comment.id} className={styles.commentItem} onClick={() => setActivePage('comments')} style={{ cursor: 'pointer' }}>
                   <div className={styles.commentMeta}>
-                    <span className={styles.commentUser}>👤 {comment.nickname}</span>
+                      <span className={styles.commentUser}>
+                        <IconUser size={12} /> {comment.nickname}
+                      </span>
                     <span className={styles.commentTime}>
                       {new Date(comment.createdAt).toLocaleDateString('zh-CN', {
                         month: 'short',
@@ -436,11 +417,12 @@ export default function DashboardPage() {
               ))
             ) : (
               <div className={styles.emptyState}>
-                <span style={{ fontSize: '1.5rem', display: 'block', marginBottom: '0.25rem' }}>🍵</span>
+                <IconCoffee size={24} className={styles.emptyIcon} />
                 <span>清净无事！当前所有的文章回复评论均已审核完毕。</span>
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

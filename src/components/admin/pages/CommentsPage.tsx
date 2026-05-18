@@ -5,7 +5,7 @@ import Button from '../shared/Button';
 import AdminCard, { CardHeader, CardBody, CardFooter } from '../shared/AdminCard';
 import { useToast } from '../shared/Toast';
 import Modal, { ConfirmModal } from '../shared/Modal';
-import LoadingSkeleton, { CommentCardSkeleton, StatsDashboardSkeleton } from '../shared/LoadingSkeleton';
+import LoadingSkeleton, { CommentCardSkeleton } from '../shared/LoadingSkeleton';
 import styles from './CommentsPage.module.css';
 import {
   IconTotal,
@@ -13,7 +13,8 @@ import {
   IconCheckCircle,
   IconTrash,
   IconCheck,
-  IconLink
+  IconLink,
+  IconSearch
 } from '../icons';
 
 interface CommentMeta {
@@ -32,6 +33,7 @@ interface StatsMeta {
   total: number;
   pending: number;
   approved: number;
+  deleted: number;
 }
 
 import { useAdmin } from '../shared/AdminContext';
@@ -44,14 +46,13 @@ function CommentsPageComponent() {
   const { showToast } = useToast();
   
   const [localFilter, setLocalFilter] = useState<FilterType>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState<CommentMeta | null>(null);
 
-  // 数据获取已移至父组件，子组件只负责展示和交互
-
-  const handleModerateComment = async (commentId: string, action: 'APPROVE' | 'DELETE') => {
+  const handleModerateComment = async (commentId: string, action: 'APPROVE' | 'DELETE' | 'RESTORE') => {
     try {
       setActionLoading(commentId);
       await contextModerate(commentId, action);
@@ -75,15 +76,23 @@ function CommentsPageComponent() {
     setSelectedComment(null);
   };
 
-  const filteredComments = localFilter === 'ALL' 
-    ? comments 
-    : comments.filter(c => c.status === localFilter);
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+  const filteredComments = comments
+    .filter(c => localFilter === 'ALL' || c.status === localFilter)
+    .filter(c => {
+      if (!normalizedQuery) return true;
+      return (
+        c.nickname.toLowerCase().includes(normalizedQuery) ||
+        c.content.toLowerCase().includes(normalizedQuery) ||
+        c.postSlug.toLowerCase().includes(normalizedQuery)
+      );
+    });
 
   const filterOptions: { value: FilterType; label: string; icon: React.ReactNode; count?: number }[] = [
-    { value: 'ALL', label: '全部', icon: <IconTotal size={14} /> },
+    { value: 'ALL', label: '全部', icon: <IconTotal size={14} />, count: stats.total },
     { value: 'PENDING', label: '待审核', icon: <IconClock size={14} />, count: stats.pending },
     { value: 'APPROVED', label: '已批准', icon: <IconCheckCircle size={14} />, count: stats.approved },
-    { value: 'DELETED', label: '已删除', icon: <IconTrash size={14} /> },
+    { value: 'DELETED', label: '已删除', icon: <IconTrash size={14} />, count: stats.deleted },
   ];
 
   return (
@@ -98,50 +107,6 @@ function CommentsPageComponent() {
         cancelText="取消"
         variant="danger"
       />
-
-      <section className={styles.statsSection}>
-        {loading ? (
-          <StatsDashboardSkeleton />
-        ) : (
-          <div className={styles.statsGrid}>
-            <AdminCard variant="bordered" className={styles.statCard}>
-              <div className={styles.statIconContainer}>
-                <IconTotal size={20} className={styles.statSvg} />
-              </div>
-              <div className={styles.statContent}>
-                <span className={styles.statLabel}>全站总留言</span>
-                <span className={styles.statValue}>{stats.total}</span>
-              </div>
-            </AdminCard>
-
-            <AdminCard 
-              variant="bordered" 
-              className={`${styles.statCard} ${styles.statPending}`}
-            >
-              <div className={styles.statIconContainer}>
-                <IconClock size={20} className={styles.statSvgPending} />
-              </div>
-              <div className={styles.statContent}>
-                <span className={`${styles.statLabel} ${styles.labelPending}`}>待批准审核</span>
-                <span className={`${styles.statValue} ${styles.valuePending}`}>{stats.pending}</span>
-              </div>
-            </AdminCard>
-
-            <AdminCard 
-              variant="bordered" 
-              className={`${styles.statCard} ${styles.statApproved}`}
-            >
-              <div className={styles.statIconContainer}>
-                <IconCheckCircle size={20} className={styles.statSvgApproved} />
-              </div>
-              <div className={styles.statContent}>
-                <span className={`${styles.statLabel} ${styles.labelApproved}`}>已批准上线</span>
-                <span className={`${styles.statValue} ${styles.valueApproved}`}>{stats.approved}</span>
-              </div>
-            </AdminCard>
-          </div>
-        )}
-      </section>
 
       <section className={styles.commentsSection}>
         <AdminCard variant="default" padding="lg" className={styles.commentsCard}>
@@ -162,6 +127,16 @@ function CommentsPageComponent() {
                     )}
                   </button>
                 ))}
+              </div>
+              <div className={styles.searchBox}>
+                <IconSearch size={14} className={styles.searchIcon} />
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="搜索昵称、内容或文章..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             </div>
           </CardHeader>
@@ -224,7 +199,7 @@ function CommentsPageComponent() {
                       <p className={styles.commentContent}>{comment.content}</p>
                       <div className={styles.commentPostRef}>
                         <IconLink size={12} className={styles.refIcon} />
-                        <span>关联博文：</span>
+                        <span>关联文章：</span>
                         <span className={styles.postSlug}>{comment.postSlug}</span>
                       </div>
                     </div>
@@ -254,6 +229,17 @@ function CommentsPageComponent() {
                             批准发布
                           </Button>
                         )}
+                        {comment.status === 'DELETED' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<IconCheck size={14} />}
+                            loading={actionLoading === comment.id}
+                            onClick={() => handleModerateComment(comment.id, 'RESTORE')}
+                          >
+                            恢复
+                          </Button>
+                        )}
                         {comment.status !== 'DELETED' && (
                           <Button
                             variant="danger"
@@ -263,12 +249,6 @@ function CommentsPageComponent() {
                           >
                             删除
                           </Button>
-                        )}
-                        {comment.status === 'DELETED' && (
-                          <span className={styles.deletedBadge}>已逻辑删除</span>
-                        )}
-                        {comment.status === 'APPROVED' && (
-                          <span className={styles.approvedBadge}>显示在前台</span>
                         )}
                       </div>
                     </div>

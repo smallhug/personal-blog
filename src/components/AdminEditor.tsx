@@ -259,7 +259,7 @@ export default function AdminEditor({ initialSlug }: AdminEditorProps) {
     <div className={styles.editorContainer} onDragOver={handleDragOver} onDrop={handleDrop}>
       {/* 左栏：配置元数据面板 */}
       <aside className={`${styles.metaPanel} glass-card`}>
-        <h3 className={styles.sectionHeader}>博文设置</h3>
+        <h3 className={styles.sectionHeader}>文章设置</h3>
         
         {/* 本地拖拽导入区 */}
         <div

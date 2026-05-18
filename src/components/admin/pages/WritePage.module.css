@@ -6,10 +6,10 @@ WritePage 页面样式
 .pageContainer {
   width: 100%;
   max-width: 100%;
-  margin: 0 auto;
-  padding: var(--admin-space-4);
+  margin: 0;
+  padding: 0;
   animation: admin-fadeIn var(--admin-transition-base) ease-out;
-  height: calc(100vh - var(--admin-header-height) - var(--admin-space-6));
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -163,81 +163,150 @@ WritePage 页面样式
   flex: 1;
   height: 100%;
   min-height: 0;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* 工具栏 */
 .toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: var(--admin-space-3) var(--admin-space-6);
+  padding: var(--admin-space-2) var(--admin-space-4);
   background: var(--admin-bg-elevated);
   border-bottom: 1px solid var(--admin-border-subtle);
   flex-shrink: 0;
+  gap: var(--admin-space-4);
+  min-height: 44px;
+}
+
+.toolbarMetaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbarMetaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-2);
+  background: var(--admin-bg-content);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-sm);
+  padding: 0 var(--admin-space-2);
+  height: 28px;
+  transition: border-color var(--admin-transition-fast), box-shadow var(--admin-transition-fast);
+  flex: 1;
+  min-width: 0;
+  max-width: 180px;
+}
+
+.toolbarMetaItem:focus-within {
+  border-color: var(--admin-color-primary);
+  box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.15);
+}
+
+.toolbarMetaIcon {
+  color: var(--admin-text-muted);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.toolbarMetaInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--admin-text-primary);
+  font-size: var(--admin-font-xs);
+  font-family: var(--font-primary);
+  width: 100%;
+  padding: 0;
+}
+
+.toolbarMetaInput::placeholder {
+  color: var(--admin-text-muted);
 }
 
 .tabButtons {
   display: flex;
-  gap: var(--admin-space-2);
+  align-items: center;
+  gap: 2px;
+  background: var(--admin-bg-content);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-sm);
+  padding: 2px;
+  flex-shrink: 0;
 }
 
 .tabBtn {
   background: transparent;
   border: none;
-  color: var(--admin-text-secondary);
+  color: var(--admin-text-muted);
   font-family: var(--font-primary);
   font-size: var(--admin-font-sm);
-  font-weight: 600;
-  padding: var(--admin-space-2) var(--admin-space-4);
-  border-radius: var(--admin-radius-sm);
+  font-weight: 500;
+  width: 32px;
+  height: 28px;
+  border-radius: calc(var(--admin-radius-sm) - 2px);
   cursor: pointer;
-  transition: all var(--admin-transition-fast);
+  transition: background var(--admin-transition-fast), color var(--admin-transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
 .tabBtn:hover {
-  background: var(--admin-bg-content);
   color: var(--admin-text-primary);
 }
 
 .tabActive {
-  background: var(--admin-bg-content) !important;
-  color: var(--admin-text-primary) !important;
-  border: 1px solid var(--admin-border-subtle);
+  background: var(--admin-bg-elevated) !important;
+  color: var(--admin-color-primary) !important;
   box-shadow: var(--admin-shadow-xs);
 }
 
-/* 编辑器控制按钮组 */
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-3);
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
 .editorControls {
   display: flex;
   align-items: center;
-  gap: var(--admin-space-1);
+  gap: 2px;
 }
 
 .toolBtn {
-  background: var(--admin-bg-content);
-  border: 1px solid var(--admin-border-subtle);
-  color: var(--admin-text-secondary);
+  background: transparent;
+  border: none;
+  color: var(--admin-text-muted);
   font-family: var(--font-primary);
   font-size: var(--admin-font-xs);
-  font-weight: 600;
-  width: 32px;
-  height: 32px;
+  font-weight: 500;
+  width: 28px;
+  height: 28px;
   border-radius: var(--admin-radius-sm);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--admin-transition-fast);
+  transition: background var(--admin-transition-fast), color var(--admin-transition-fast);
   flex-shrink: 0;
 }
 
 .toolBtn:hover {
-  background: var(--admin-color-primary);
-  color: var(--admin-text-inverse);
-  border-color: var(--admin-color-primary);
-  transform: translateY(-1px);
-  box-shadow: var(--admin-shadow-sm);
+  background: var(--admin-bg-content);
+  color: var(--admin-text-primary);
 }
 
 .disabled {
@@ -446,7 +515,7 @@ WritePage 页面样式
 
 @media (max-width: 768px) {
   .pageContainer {
-    padding: var(--admin-space-4) var(--admin-space-3);
+    padding: 0;
   }
 
   .editorLayout {
@@ -459,19 +528,33 @@ WritePage 页面样式
   }
 
   .toolbar {
-    flex-direction: column;
-    gap: var(--admin-space-3);
-    padding: var(--admin-space-3) var(--admin-space-4);
+    flex-wrap: wrap;
+    gap: var(--admin-space-2);
+    padding: var(--admin-space-2) var(--admin-space-3);
+  }
+
+  .toolbarMetaRow {
+    order: 1;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .toolbarMetaItem {
+    flex: 1 1 calc(50% - var(--admin-space-2));
+    max-width: none;
   }
 
   .tabButtons {
-    width: 100%;
-    justify-content: center;
+    order: 2;
+  }
+
+  .toolbarActions {
+    order: 3;
+    flex: 1;
+    justify-content: flex-end;
   }
 
   .editorControls {
-    width: 100%;
-    justify-content: center;
     flex-wrap: wrap;
   }
 
@@ -642,10 +725,11 @@ WritePage 页面样式
   overflow: hidden;
   height: 100%;
   min-height: 0;
-  border-top: 1px solid var(--admin-border-subtle);
 }
 
 .editorPane {
+  flex: 1;
+  height: 100%;
   border-right: 1px solid var(--admin-border-subtle);
   display: flex;
   flex-direction: column;
@@ -1083,12 +1167,11 @@ WritePage 页面样式
   gap: var(--admin-space-2);
 }
 
-/* 历史文章高斯模糊弹窗样式 */
+/* 历史文章透明遮罩弹窗样式 */
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(25px) saturate(140%);
+  background: rgba(0, 0, 0, 0.4); /* 彻底将窗口外区域改为透明（仅保留适度暗化遮罩，无毛玻璃模糊） */
   z-index: var(--admin-z-modal);
   display: flex;
   align-items: center;
@@ -1100,9 +1183,9 @@ WritePage 页面样式
   width: 680px;
   max-width: 90%;
   height: 520px;
-  background: rgba(15, 23, 42, 0.3) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3) !important;
+  background: #ffffff !important; /* 整个窗口改为纯白色背景 */
+  border: 1px solid #e2e8f0 !important; /* 精致轻薄的灰色外边框 */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12) !important; /* 高雅柔和的阴影 */
   border-radius: var(--admin-radius-lg);
   display: flex;
   flex-direction: column;
@@ -1126,21 +1209,21 @@ WritePage 页面样式
   justify-content: space-between;
   align-items: center;
   padding: var(--admin-space-4) var(--admin-space-6);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc; /* 优雅的头部浅灰背景 */
 }
 
 .modalTitle {
   font-size: var(--admin-font-base);
   font-weight: 700;
-  color: var(--admin-text-primary);
+  color: #0f172a; /* 标题文字改为深 slate 色 */
   margin: 0;
 }
 
 .closeBtn {
   background: transparent;
   border: none;
-  color: var(--admin-text-secondary);
+  color: #64748b; /* 关闭按钮颜色调整 */
   font-size: 1.5rem;
   cursor: pointer;
   transition: color var(--admin-transition-fast);
@@ -1155,6 +1238,7 @@ WritePage 页面样式
   flex: 1;
   padding: var(--admin-space-6);
   overflow-y: auto;
+  background: #ffffff; /* 主框白底 */
 }
 
 .historyList {
@@ -1168,14 +1252,14 @@ WritePage 页面样式
   justify-content: space-between;
   align-items: center;
   padding: var(--admin-space-3) var(--admin-space-4);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #ffffff;
+  border: 1px solid #e2e8f0; /* 自适应白色背景的轻边框 */
   border-radius: var(--admin-radius-sm);
   transition: all var(--admin-transition-fast);
 }
 
 .historyItem:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f1f5f9; /* 浅灰色悬浮高亮 */
   border-color: var(--admin-color-primary);
   transform: translateX(3px);
 }
@@ -1189,7 +1273,7 @@ WritePage 页面样式
 }
 
 .historyPostTitle {
-  color: var(--admin-text-primary);
+  color: #1e293b; /* 标题文字改为深 Slate */
   font-size: var(--admin-font-sm);
   font-weight: 600;
   white-space: nowrap;
@@ -1198,9 +1282,14 @@ WritePage 页面样式
 }
 
 .historyPostDate {
-  color: var(--admin-text-muted);
+  color: #64748b; /* 辅助日期信息改为中度灰色 */
   font-size: var(--admin-font-xs);
   white-space: nowrap;
+}
+
+.historyModal .loadingState,
+.historyModal .emptyState {
+  color: #64748b !important;
 }
 
 .historyActions {
@@ -1247,4 +1336,159 @@ WritePage 页面样式
   color: #fff;
   border-color: #ef4444;
   transform: translateY(-1px);
+}
+
+.attrLabelIcon {
+  margin-right: 6px;
+  display: inline-block;
+  vertical-align: middle;
+  color: var(--admin-color-primary);
+  flex-shrink: 0;
+}
+
+.modalTitleIcon {
+  margin-right: 8px;
+  color: var(--admin-color-primary);
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* =========================================================================
+   单行排列的文章属性栏 (metaRow) 现代感样式定义
+   ========================================================================= */
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-4);
+  padding: var(--admin-space-4) var(--admin-space-5);
+  border-bottom: 1px solid var(--admin-border-subtle);
+  background: rgba(255, 255, 255, 0.015);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-1);
+  min-width: 0;
+}
+
+.metaLabel {
+  font-size: var(--admin-font-xs);
+  font-weight: 700;
+  color: var(--admin-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+}
+
+.metaInput,
+.metaSelect,
+.metaImportBtn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--admin-border-subtle);
+  color: var(--admin-text-primary);
+  padding: 0 var(--admin-space-3);
+  border-radius: var(--admin-radius-sm);
+  font-family: var(--font-primary);
+  font-size: var(--admin-font-sm);
+  outline: none;
+  transition: all var(--admin-transition-fast);
+  box-sizing: border-box;
+  height: 34px;
+}
+
+.metaInput::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.metaInput:focus,
+.metaSelect:focus {
+  border-color: var(--admin-color-primary) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  animation: admin-tealGlow 2.5s infinite ease-in-out;
+  outline: none;
+}
+
+.metaInput:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.metaImportBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--admin-color-primary);
+  user-select: none;
+  font-size: var(--admin-font-xs);
+  transition: all var(--admin-transition-fast);
+}
+
+.metaImportBtn:hover {
+  background: rgba(8, 145, 178, 0.1);
+  border-color: var(--admin-color-primary);
+}
+
+/* 下拉菜单在暗色模式下展开的适配 */
+.metaSelect option {
+  background: #12131a;
+  color: var(--admin-text-primary);
+}
+
+/* 状态指示胶囊 */
+.statusBadgeWrapper {
+  display: flex;
+  align-items: center;
+  height: 38px; /* 完美对齐旁边的 metaInput 输入框 */
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--admin-font-xs);
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 9999px; /* 精致圆胶囊 */
+  user-select: none;
+  letter-spacing: 0.5px;
+  transition: all var(--admin-transition-fast);
+}
+
+.badgePublished {
+  background: rgba(6, 182, 212, 0.12); /* 浅青色微光背景 */
+  color: #22d3ee; /* 高亮青色 */
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.08);
+}
+
+.badgeDraft {
+  background: rgba(255, 255, 255, 0.03); /* 低调灰色背景 */
+  color: #94a3b8; /* Slate 中度灰字 */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 响应式断点适配：平板及窄屏自适应列排布与移动端全堆叠 */
+@media (max-width: 1200px) {
+  .metaRow {
+    flex-wrap: wrap;
+    gap: var(--admin-space-3);
+  }
+  .metaItem {
+    flex: 1 1 calc(33.333% - var(--admin-space-3)) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .metaItem {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
 }

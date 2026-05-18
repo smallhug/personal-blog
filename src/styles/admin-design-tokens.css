@@ -68,19 +68,23 @@
   /* ---- 极简纸张玻璃拟态系统 ---- */
   --admin-bg-glass: rgba(255, 255, 255, 0.03);
   --admin-glass-blur: blur(20px) saturate(140%);
-  --admin-glass-border: rgba(255, 255, 255, 0.08);
+  --admin-glass-border: rgba(8, 145, 178, 0.22);
   --admin-glass-shadow: none;
 
   /* 语义化颜色映射 */
   --admin-bg-sidebar: rgba(255, 255, 255, 0.02);
   --admin-bg-content: transparent;
   --admin-bg-elevated: rgba(255, 255, 255, 0.06);
-  --admin-border-subtle: var(--admin-glass-border);
-  --admin-border-strong: rgba(255, 255, 255, 0.15);
+  --admin-border-subtle: rgba(8, 145, 178, 0.28);
+  --admin-border-strong: rgba(8, 145, 178, 0.45);
   --admin-text-primary: var(--text-primary);
   --admin-text-secondary: var(--text-secondary);
   --admin-text-muted: var(--text-muted);
   --admin-text-inverse: #ffffff;
+
+  /* 仪表盘变量兼容垫片 */
+  --border-glass: var(--admin-glass-border);
+  --bg-glass-card: var(--admin-bg-elevated);
 
   /* ---- 尺寸常量 ---- */
   --admin-sidebar-width: 150px;

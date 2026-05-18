@@ -19,7 +19,7 @@ interface SidebarProps {
 
 const defaultNavItems: NavItem[] = [
   { id: 'dashboard', label: '数据中心', icon: <IconTotal size={16} /> },
-  { id: 'write', label: '博文撰写', icon: <IconPen size={16} /> },
+  { id: 'write', label: '文章撰写', icon: <IconPen size={16} /> },
   { id: 'comments', label: '评论审核', icon: <IconMessage size={16} /> },
 ];
 

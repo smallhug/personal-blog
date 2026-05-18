@@ -124,6 +124,62 @@
   color: var(--admin-color-success);
 }
 
+.statDeleted {
+  background: rgba(100, 116, 139, 0.04);
+  border-left: 3px solid #94a3b8;
+}
+
+.statSvgDeleted {
+  color: #94a3b8;
+}
+
+.labelDeleted {
+  color: #64748b;
+}
+
+.valueDeleted {
+  color: #64748b;
+}
+
+/* ---- 搜索栏 ---- */
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-2);
+  background: var(--admin-bg-content);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-sm);
+  padding: 0 var(--admin-space-3);
+  height: 32px;
+  width: 240px;
+  transition: border-color var(--admin-transition-fast), box-shadow var(--admin-transition-fast);
+}
+
+.searchBox:focus-within {
+  border-color: var(--admin-color-primary);
+  box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.15);
+}
+
+.searchIcon {
+  color: var(--admin-text-muted);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--admin-text-primary);
+  font-size: var(--admin-font-sm);
+  font-family: var(--font-primary);
+  width: 100%;
+  padding: 0;
+}
+
+.searchInput::placeholder {
+  color: var(--admin-text-muted);
+}
+
 /* ---- 评论列表区域 ---- */
 .commentsSection {
   width: 100%;
@@ -499,7 +555,7 @@
 
 @media (max-width: 768px) {
   .statsGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: var(--admin-space-3);
   }
 
@@ -507,10 +563,20 @@
     padding: var(--admin-space-4);
   }
 
-  .statIcon {
-    width: 40px;
-    height: 40px;
-    font-size: var(--admin-font-xl);
+  .headerRow {
+    flex-direction: column;
+    gap: var(--admin-space-3);
+    align-items: stretch;
+  }
+
+  .filterGroup {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: var(--admin-space-2);
+  }
+
+  .searchBox {
+    width: 100%;
   }
 
   .commentHeader {

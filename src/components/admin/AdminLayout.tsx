@@ -18,7 +18,7 @@ const pageConfigs: Record<string, PageConfig> = {
   },
   write: {
     id: 'write',
-    title: '✍️ 博文撰写面板',
+    title: '✍️ 文章撰写面板',
     subtitle: '创作和管理您的博客文章',
   },
   comments: {
@@ -41,7 +41,6 @@ export default function AdminLayout({
   pendingCommentsCount = 0,
   onPageChange 
 }: AdminLayoutProps) {
-  const [activePage, setActivePage] = useState(initialPage);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -55,15 +54,7 @@ export default function AdminLayout({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  useEffect(() => {
-    if (initialPage !== activePage) {
-      setActivePage(initialPage);
-    }
-  }, [initialPage]);
-
   const handleNavigate = (pageId: string) => {
-    setActivePage(pageId);
-    
     if (onPageChange) {
       onPageChange(pageId);
     }
@@ -73,7 +64,7 @@ export default function AdminLayout({
     }
   };
 
-  const currentPageConfig = pageConfigs[activePage] || pageConfigs.dashboard;
+  const currentPageConfig = pageConfigs[initialPage] || pageConfigs.dashboard;
 
   const navItems: NavItem[] = [
     { 
@@ -83,7 +74,7 @@ export default function AdminLayout({
     },
     { 
       id: 'write', 
-      label: '博文撰写', 
+      label: '文章撰写', 
       icon: '✍️' 
     },
     { 
@@ -108,13 +99,13 @@ export default function AdminLayout({
       <div className={styles.body}>
         {/* 左侧导航栏 */}
         <Sidebar
-          activeItem={activePage}
+          activeItem={initialPage}
           onNavigate={handleNavigate}
           pendingCommentsCount={pendingCommentsCount}
         />
 
         {/* 右侧主内容区 */}
-        <main className={`${styles.content} admin-page-transition`}>
+        <main className={`${styles.content} ${initialPage === 'write' ? styles.contentFull : ''}`}>
           {children}
         </main>
       </div>

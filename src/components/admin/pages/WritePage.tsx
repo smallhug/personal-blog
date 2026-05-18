@@ -20,7 +20,12 @@ import {
   IconCode,
   IconImage,
   IconTrash,
-  IconPencil
+  IconPencil,
+  IconTag,
+  IconFolder,
+  IconClock,
+  IconCheckCircle,
+  IconAlertTriangle
 } from '../icons';
 
 interface PostListMeta {
@@ -181,7 +186,7 @@ function WritePageComponent({
         setSlug(file.name.replace(/\.mdx?$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-'));
         setContent(text.trim());
       }
-      showToast('success', '🎉 本地 Markdown 导入解析成功！');
+      showToast('success', '本地 Markdown 导入解析成功！');
     };
     reader.readAsText(file);
   };
@@ -263,13 +268,14 @@ function WritePageComponent({
     }, 50);
   };
 
-  const handleSave = async (forceOverwrite = false) => {
+  const handleSave = async (forceOverwrite = false, targetStatus?: 'DRAFT' | 'PUBLISHED') => {
     if (!title.trim() || !slug.trim()) {
       showToast('error', '标题与 Slug 链接名不能空哦');
       return;
     }
 
     setSaving(true);
+    const finalStatus = targetStatus || status;
 
     try {
       const res = await fetch('/api/admin/posts', {
@@ -282,7 +288,7 @@ function WritePageComponent({
           title: title.trim(),
           slug: slug.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-'),
           tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-          status,
+          status: finalStatus,
           content,
           isEdit: !!editSlug,
           forceOverwrite,
@@ -300,7 +306,8 @@ function WritePageComponent({
       }
 
       if (res.ok) {
-        showToast('success', '🎉 博文保存并同步写入本地磁盘成功！');
+        setStatus(finalStatus); // 同步本地 React 状态
+        showToast('success', finalStatus === 'PUBLISHED' ? '文章已成功发布上线！' : '草稿保存成功！');
         if (!editSlug) {
           localStorage.removeItem('autosave_new_post');
           // 极致无缝 SPA 跳转：更新 context 的 editSlug 并在原地自适应切换
@@ -372,78 +379,6 @@ function WritePageComponent({
 
   const renderEditorPane = () => (
     <div className={styles.editorPane}>
-      {/* 嵌入式 Notion 风格属性面板 */}
-      <div className={styles.embeddedAttrPanel}>
-        {/* 1. 超大极简无边框标题输入框 */}
-        <input
-          type="text"
-          className={styles.embeddedTitleInput}
-          placeholder="在此输入博文标题..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        
-        {/* 2. 紧凑的元数据参数格 */}
-        <div className={styles.embeddedAttrGrid}>
-          {/* Tags 标签 */}
-          <div className={styles.embeddedAttrRow}>
-            <span className={styles.embeddedAttrLabel}>🏷️ 标签</span>
-            <input
-              type="text"
-              className={styles.embeddedAttrInput}
-              placeholder="例如：生活, 极客 (用逗号分隔)"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-            />
-          </div>
-
-          {/* Slug 链接名 */}
-          <div className={styles.embeddedAttrRow}>
-            <span className={styles.embeddedAttrLabel}>🔗 链接名</span>
-            <input
-              type="text"
-              className={styles.embeddedAttrInput}
-              placeholder="my-post-slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]+/g, '-'))}
-              disabled={!!editSlug}
-            />
-          </div>
-
-          {/* 发布状态 */}
-          <div className={styles.embeddedAttrRow}>
-            <span className={styles.embeddedAttrLabel}>🟢 状态</span>
-            <div className={styles.selectWrapper}>
-              <select 
-                className={styles.embeddedAttrSelect} 
-                value={status} 
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="DRAFT">🟡 保存草稿 (Draft)</option>
-                <option value="PUBLISHED">🟢 物理公开 (Publish)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Markdown 本地导入 */}
-          <div className={styles.embeddedAttrRow}>
-            <span className={styles.embeddedAttrLabel}>📂 导入 MD</span>
-            <div className={styles.miniImportBtn} onClick={() => fileInputRef.current?.click()}>
-              <span>点击导入 MD 文件</span>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className={styles.hiddenFile}
-                accept=".md,.mdx"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) handleFileImport(e.target.files[0]);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* 正文输入 */}
       <textarea
         ref={textareaRef}
@@ -489,19 +424,53 @@ function WritePageComponent({
           setPendingSlugForDelete(null);
         }}
         onConfirm={handleDeleteConfirm}
-        title="⚠️ 危险操作：彻底删除博文"
+        title="危险操作：彻底删除文章"
         message={`确定要永久删除文章 "${pendingSlugForDelete}" 吗？此操作将永久抹去磁盘 Markdown 文件和数据库记录，无法找回！`}
         confirmText="确认删除"
         cancelText="取消"
         variant="danger"
       />
-
-
-
       {/* ================= 核心重构 2：全宽度编辑器面板 ================= */}
-      <AdminCard variant="flat" className={styles.editorCard}>
+      <AdminCard variant="default" className={styles.editorCard}>
         <div className={styles.toolbar}>
-          {/* 左侧：编辑/对照/预览 Tab 切换 */}
+          {/* 左侧：标题、标签、链接名 */}
+          <div className={styles.toolbarMetaRow}>
+            <div className={styles.toolbarMetaItem}>
+              <IconPen size={13} className={styles.toolbarMetaIcon} />
+              <input
+                type="text"
+                className={styles.toolbarMetaInput}
+                placeholder="文章标题..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.toolbarMetaItem}>
+              <IconTag size={13} className={styles.toolbarMetaIcon} />
+              <input
+                type="text"
+                className={styles.toolbarMetaInput}
+                placeholder="标签 (逗号分隔)..."
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.toolbarMetaItem}>
+              <IconLink size={13} className={styles.toolbarMetaIcon} />
+              <input
+                type="text"
+                className={styles.toolbarMetaInput}
+                placeholder="链接名..."
+                value={slug}
+                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]+/g, '-'))}
+                disabled={!!editSlug}
+              />
+            </div>
+          </div>
+
+          {/* 中央：编辑模式切换 */}
           <div className={styles.tabButtons}>
             <button
               className={`${styles.tabBtn} ${activeTab === 'write' ? styles.tabActive : ''}`}
@@ -509,7 +478,6 @@ function WritePageComponent({
               title="纯编辑模式"
             >
               <IconPen size={14} />
-              <span className={styles.tabText}>纯编辑</span>
             </button>
             <button
               className={`${styles.tabBtn} ${activeTab === 'split' ? styles.tabActive : ''}`}
@@ -517,7 +485,6 @@ function WritePageComponent({
               title="双栏对照模式"
             >
               <IconSplit size={14} />
-              <span className={styles.tabText}>双栏对照</span>
             </button>
             <button
               className={`${styles.tabBtn} ${activeTab === 'preview' ? styles.tabActive : ''}`}
@@ -525,50 +492,49 @@ function WritePageComponent({
               title="纯预览模式"
             >
               <IconEye size={14} />
-              <span className={styles.tabText}>纯预览</span>
             </button>
           </div>
 
-          {/* 中间：Markdown 快捷样式辅助栏 */}
-          <div className={styles.editorControls}>
-            <Button variant="ghost" size="sm" onClick={() => insertShortcut('**', '**')} title="加粗">
-              <IconBold size={14} />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => insertShortcut('*', '*')} title="斜体">
-              <IconItalic size={14} />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => insertShortcut('### ')} title="三级标题">
-              <IconHeading size={14} />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => insertShortcut('[链接描述](', ')')} title="超链接">
-              <IconLink size={14} />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => insertShortcut('```\n', '\n```')} title="代码块">
-              <IconCode size={14} />
-            </Button>
-            
-            <label
-              className={`${styles.toolBtn} ${uploading ? styles.disabled : ''}`}
-              title="插入图片"
-            >
-              <IconImage size={14} />
-              <input
-                type="file"
-                className={styles.hiddenFile}
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploading}
-              />
-            </label>
-          </div>
+          {/* 右侧：Markdown 快捷样式 + 操作按钮 */}
+          <div className={styles.toolbarActions}>
+            <div className={styles.editorControls}>
+              <Button variant="ghost" size="sm" onClick={() => insertShortcut('**', '**')} title="加粗">
+                <IconBold size={14} />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => insertShortcut('*', '*')} title="斜体">
+                <IconItalic size={14} />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => insertShortcut('### ')} title="三级标题">
+                <IconHeading size={14} />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => insertShortcut('[链接描述](', ')')} title="超链接">
+                <IconLink size={14} />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => insertShortcut('```\n', '\n```')} title="代码块">
+                <IconCode size={14} />
+              </Button>
+              
+              <label
+                className={`${styles.toolBtn} ${uploading ? styles.disabled : ''}`}
+                title="插入图片"
+              >
+                <IconImage size={14} />
+                <input
+                  type="file"
+                  className={styles.hiddenFile}
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                />
+              </label>
+            </div>
 
-          {/* 右侧：全局整合动作按钮区 */}
-          <div className={styles.actionButtons}>
+            <div className={styles.actionButtons}>
             {editSlug && (
               <Button
                 variant="ghost"
                 size="sm"
-                title="新建博文并清空内容"
+                title="新建文章并清空内容"
                 icon={<IconPen size={14} />}
                 onClick={() => {
                   setTitle('');
@@ -579,7 +545,7 @@ function WritePageComponent({
                   if (context && typeof context.setEditSlug === 'function') {
                     context.setEditSlug(undefined);
                   }
-                  showToast('success', '已切入全新博文创作！');
+                  showToast('success', '已切入全新文章创作！');
                 }}
               >
                 新建文章
@@ -589,7 +555,7 @@ function WritePageComponent({
             <Button
               variant="ghost"
               size="sm"
-              title="管理历史博文"
+              title="管理历史文章"
               icon={<IconPencil size={14} />}
               onClick={() => setIsHistoryModalOpen(true)}
             >
@@ -597,14 +563,46 @@ function WritePageComponent({
             </Button>
 
             <Button
-              variant="primary"
+              variant="ghost"
               size="sm"
-              loading={saving}
+              title="导入本地 Markdown/MDX 文件"
+              icon={<IconCloudUpload size={14} />}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              导入文件
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className={styles.hiddenFile}
+              accept=".md,.mdx"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) handleFileImport(e.target.files[0]);
+              }}
+            />
+
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={saving && status === 'DRAFT'}
+              title="仅保存当前文章内容，不改变其公开状态"
               icon={<IconFloppy size={14} />}
               onClick={() => handleSave(false)}
             >
-              {saving ? '保存中...' : '保存博文'}
+              保存
             </Button>
+
+            <Button
+              variant="primary"
+              size="sm"
+              loading={saving && status === 'PUBLISHED'}
+              title={status === 'PUBLISHED' ? "更新当前已发布的文章内容" : "正式将草稿发布上线"}
+              icon={<IconCheckCircle size={14} />}
+              onClick={() => handleSave(false, 'PUBLISHED')}
+            >
+              {status === 'PUBLISHED' ? '更新发布' : '发布'}
+            </Button>
+          </div>
           </div>
         </div>
 
@@ -637,18 +635,21 @@ function WritePageComponent({
         </div>
       </AdminCard>
 
-      {/* ================= 核心重构 3：📁 历史博文极速管理库弹窗 ================= */}
+      {/* ================= 核心重构 3：📁 历史文章管理弹窗 ================= */}
       {isHistoryModalOpen && (
         <div className={styles.modalOverlay} onClick={() => setIsHistoryModalOpen(false)}>
-          <div className={`${styles.historyModal} glass-card`} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.historyModal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>📂 历史博文管理库</h3>
+              <h3 className={styles.modalTitle}>
+                <IconFolder size={18} className={styles.modalTitleIcon} />
+                历史文章管理
+              </h3>
               <button className={styles.closeBtn} onClick={() => setIsHistoryModalOpen(false)}>×</button>
             </div>
 
             <div className={styles.modalBody}>
               {loading ? (
-                <div className={styles.loadingState}>正在整理博文数据...</div>
+                <div className={styles.loadingState}>正在整理文章数据...</div>
               ) : posts.length === 0 ? (
                 <div className={styles.emptyState}>绿洲中尚无历史文章</div>
               ) : (

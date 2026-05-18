@@ -27,6 +27,7 @@ export interface StatsMeta {
   total: number;
   pending: number;
   approved: number;
+  deleted: number;
 }
 
 interface AdminContextType {
@@ -43,7 +44,7 @@ interface AdminContextType {
   login: (password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   fetchDashboardData: (tokenArg?: string) => Promise<void>;
-  handleModerateComment: (commentId: string, action: 'APPROVE' | 'DELETE') => Promise<void>;
+  handleModerateComment: (commentId: string, action: 'APPROVE' | 'DELETE' | 'RESTORE') => Promise<void>;
   handleDeletePost: (slug: string) => Promise<boolean>;
 }
 
@@ -59,7 +60,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   // 后台全局数据状态
   const [posts, setPosts] = useState<PostListMeta[]>([]);
   const [comments, setComments] = useState<CommentMeta[]>([]);
-  const [stats, setStats] = useState<StatsMeta>({ total: 0, pending: 0, approved: 0 });
+  const [stats, setStats] = useState<StatsMeta>({ total: 0, pending: 0, approved: 0, deleted: 0 });
   const [loading, setLoading] = useState(true);
 
   // 路由与编辑页内存状态
@@ -71,7 +72,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       const currentToken = tokenArg || adminToken;
-      const authHeaders = currentToken ? { 'x-admin-token': currentToken } : {};
+      const authHeaders: Record<string, string> = currentToken ? { 'x-admin-token': currentToken } : {};
 
       // 1. 获取文章列表
       const postsRes = await fetch('/api/admin/posts', {
@@ -163,14 +164,14 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(false);
     setPosts([]);
     setComments([]);
-    setStats({ total: 0, pending: 0, approved: 0 });
+    setStats({ total: 0, pending: 0, approved: 0, deleted: 0 });
     setActivePage('dashboard');
     setEditSlug(undefined);
     showToast('success', '您已安全退出控制台');
   };
 
   // 评论审批审核流程
-  const handleModerateComment = async (commentId: string, action: 'APPROVE' | 'DELETE') => {
+  const handleModerateComment = async (commentId: string, action: 'APPROVE' | 'DELETE' | 'RESTORE') => {
     try {
       const res = await fetch('/api/admin/comments', {
         method: 'PUT',
@@ -190,7 +191,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           const { list, stats: commentStats } = await commentsRes.json();
           setComments(list);
           setStats(commentStats);
-          showToast('success', action === 'APPROVE' ? '评论已批准发布' : '评论已成功删除');
+          showToast('success', action === 'APPROVE' ? '评论已批准发布' : action === 'RESTORE' ? '评论已恢复为待审核状态' : '评论已成功删除');
         }
       } else {
         showToast('error', '审批动作操作失败，请重试');
@@ -201,7 +202,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // 博文删除接口
+  // 文章删除接口
   const handleDeletePost = async (slug: string): Promise<boolean> => {
     try {
       const res = await fetch(`/api/admin/posts?slug=${slug}`, {
@@ -212,15 +213,15 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        showToast('success', `✅ 博文 "${slug}" 已成功删除`);
+        showToast('success', `文章 "${slug}" 已成功删除`);
         fetchDashboardData(); // 重新拉取以刷新列表
         return true;
       } else {
-        showToast('error', '❌ 删除博文失败，请重试');
+        showToast('error', '❌ 删除文章失败，请重试');
         return false;
       }
     } catch (err) {
-      console.error('删除博文异常', err);
+      console.error('删除文章异常', err);
       showToast('error', '⚠️ 网络异常，删除未完成');
       return false;
     }

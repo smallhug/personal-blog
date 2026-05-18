@@ -14,7 +14,7 @@ function ensureBackupsDirectory() {
   }
 }
 
-// 1. GET：加载所有博文列表（用于后台管理）或加载指定单篇详情
+// 1. GET：加载所有文章列表（用于后台管理）或加载指定单篇详情
 export async function GET(request: NextRequest) {
   if (!verifyAdminAuth(request)) {
     return NextResponse.json({ message: '安全网关拦截：未授权的后台数据读取' }, { status: 401 });
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       // 获取单篇文章详情
       const post = getPostData(slug);
       if (!post) {
-        return NextResponse.json({ message: '博文不存在' }, { status: 404 });
+        return NextResponse.json({ message: '文章不存在' }, { status: 404 });
       }
       return NextResponse.json(post);
     } else {
@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(posts);
     }
   } catch (err) {
-    console.error('后台加载博文出错:', err);
-    return NextResponse.json({ message: '后台加载博文失败' }, { status: 500 });
+    console.error('后台加载文章出错:', err);
+    return NextResponse.json({ message: '后台加载文章失败' }, { status: 500 });
   }
 }
 
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         const oldFileContents = fs.readFileSync(filePath, 'utf-8');
         const backupFileName = `${cleanSlug}-${Date.now()}.bak.md`;
         fs.writeFileSync(path.join(backupsDirectory, backupFileName), oldFileContents, 'utf-8');
-        console.log(`博文覆盖成功，旧版本已安全备份至: ${backupFileName}`);
+        console.log(`文章覆盖成功，旧版本已安全备份至: ${backupFileName}`);
       }
     }
 
@@ -110,9 +110,9 @@ ${cleanContent}
 
     fs.writeFileSync(filePath, fileContent, 'utf-8');
 
-    return NextResponse.json({ message: '博文已成功保存，并在本地磁盘同步！', slug: cleanSlug });
+    return NextResponse.json({ message: '文章已成功保存，并在本地磁盘同步！', slug: cleanSlug });
   } catch (err) {
-    console.error('保存博文失败:', err);
+    console.error('保存文章失败:', err);
     return NextResponse.json({ message: '本地磁盘写入失败，请检查服务写权限' }, { status: 500 });
   }
 }
@@ -143,12 +143,12 @@ export async function DELETE(request: NextRequest) {
       
       // 物理删除
       fs.unlinkSync(filePath);
-      return NextResponse.json({ message: '博文已彻底物理删除，历史数据已安全归档备份！' });
+      return NextResponse.json({ message: '文章已彻底物理删除，历史数据已安全归档备份！' });
     } else {
       return NextResponse.json({ message: '未找到指定要删除的文件' }, { status: 404 });
     }
   } catch (err) {
-    console.error('物理删除博文错误:', err);
+    console.error('物理删除文章错误:', err);
     return NextResponse.json({ message: '物理删除失败' }, { status: 500 });
   }
 }

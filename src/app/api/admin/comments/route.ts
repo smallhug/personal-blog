@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     const total = await db.comment.count();
     const pending = await db.comment.count({ where: { status: 'PENDING' } });
     const approved = await db.comment.count({ where: { status: 'APPROVED' } });
+    const deleted = await db.comment.count({ where: { status: 'DELETED' } });
 
     return NextResponse.json({
       list: commentsList,
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
         total,
         pending,
         approved,
+        deleted,
       },
     });
   } catch (err) {
@@ -69,6 +71,13 @@ export async function PUT(request: NextRequest) {
         },
       });
       return NextResponse.json(softDeletedComment);
+    } else if (action === 'RESTORE') {
+      // 恢复已删除评论：状态回退为 PENDING 待审核
+      const restoredComment = await db.comment.update({
+        where: { id: commentId },
+        data: { status: 'PENDING' },
+      });
+      return NextResponse.json(restoredComment);
     } else {
       return NextResponse.json({ message: '未知的审批操作' }, { status: 400 });
     }

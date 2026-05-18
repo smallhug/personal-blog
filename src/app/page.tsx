@@ -3,7 +3,7 @@ import HomeContainer from '@/components/HomeContainer';
 import { getSortedPostsData, getTagCloud } from '@/lib/posts';
 import { db } from '@/lib/db';
 
-// 强制采用服务器渲染模式以获得最新博文与数据
+// 强制采用服务器渲染模式以获得最文章与数据
 export const revalidate = 0;
 
 export default async function HomePage() {

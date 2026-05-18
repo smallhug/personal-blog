@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense, useState, useEffect } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ToastContainer from '@/components/admin/shared/Toast';
 import { ConfirmModal } from '@/components/admin/shared/Modal';
@@ -29,7 +29,6 @@ function AdminContentInner() {
     handleDeletePost
   } = useAdmin();
 
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
@@ -39,25 +38,18 @@ function AdminContentInner() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [pendingDeleteSlug, setPendingDeleteSlug] = useState<string | null>(null);
 
-  // 1. 路由双向单向同步：从物理 URL 路径同步至 React Context 状态
+  // 1. 初始化挂载时，从 URL 同步状态
   useEffect(() => {
     const segments = pathname.split('/').filter(Boolean);
-    
-    // 如果是 /admin 根路径，自动优雅重定向到 /admin/data
     if (segments.length === 1 && segments[0] === 'admin') {
-      router.replace('/admin/data');
       setActivePage('dashboard');
     } else if (segments.length === 2 && segments[0] === 'admin') {
       const subPage = segments[1];
-      if (subPage === 'data') {
-        setActivePage('dashboard');
-      } else if (subPage === 'write') {
-        setActivePage('write');
-      } else if (subPage === 'comments') {
-        setActivePage('comments');
-      }
+      if (subPage === 'data') setActivePage('dashboard');
+      else if (subPage === 'write') setActivePage('write');
+      else if (subPage === 'comments') setActivePage('comments');
     }
-  }, [pathname, setActivePage, router]);
+  }, []);
 
   // 2. 初始化挂载时，将 edit 参数同步至全局上下文
   useEffect(() => {
@@ -65,7 +57,7 @@ function AdminContentInner() {
       setEditSlug(editSlugFromUrl);
       setActivePage('write');
     }
-  }, [editSlugFromUrl, setActivePage, setEditSlug]);
+  }, []);
 
   // 3. 锁定视口高度，并在后台状态下关闭全局页脚以避免高度溢出
   useEffect(() => {
@@ -91,20 +83,9 @@ function AdminContentInner() {
     };
   }, []);
 
-  // 统一路由与页面切换控制器
+  // 统一页页面切换控制器（纯客户端状态，不触发路由导航）
   const handlePageChange = (page: 'dashboard' | 'write' | 'comments') => {
     setActivePage(page);
-    if (page === 'dashboard') {
-      router.push('/admin/data');
-    } else if (page === 'write') {
-      if (editSlug) {
-        router.push(`/admin/write?edit=${editSlug}`);
-      } else {
-        router.push('/admin/write');
-      }
-    } else if (page === 'comments') {
-      router.push('/admin/comments');
-    }
   };
 
   const handleDeleteTrigger = (slug: string) => {
@@ -135,7 +116,7 @@ function AdminContentInner() {
 
   return (
     <>
-      {/* 极简博文删除确认弹窗 */}
+      {/* 极简文章删除确认弹窗 */}
       <ConfirmModal
         isOpen={deleteModalOpen}
         onClose={() => {

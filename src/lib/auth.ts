@@ -10,7 +10,7 @@ export function verifyAdminAuth(request: NextRequest): boolean {
 
   // 2. 降级读取原有的安全 Cookie 凭证
   if (!token) {
-    token = request.cookies.get('admin_token')?.value;
+    token = request.cookies.get('admin_token')?.value || null;
   }
 
   const correctPassword = process.env.ADMIN_PASSWORD || 'admin123';

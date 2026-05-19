@@ -5,6 +5,7 @@ import { getPostData } from '@/lib/posts';
 import TOC from '@/components/TOC';
 import { formatToChineseDateTime } from '@/lib/date';
 import CommentsSection from '@/components/CommentsSection';
+import CodeCopyButton from '@/components/CodeCopyButton';
 import { db } from '@/lib/db';
 import { headers } from 'next/headers';
 import styles from './page.module.css';
@@ -72,6 +73,30 @@ export default async function PostPage({ params }: PostPageProps) {
     console.error('更新唯一 IP 阅读量出错:', err);
   }
 
+  // 配置 marked 使用 highlight.js 语法高亮（通过自定义 renderer）
+const renderer = new marked.Renderer();
+const originalCodeRenderer = renderer.code.bind(renderer);
+
+renderer.code = function(code: string, lang: string | undefined, _escaped: boolean): string {
+  if (typeof window === 'undefined' && lang) {
+    try {
+      const hljs = require('highlight.js');
+      const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+      const highlighted = hljs.highlight(code, { language }).value;
+      return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>\n`;
+    } catch {
+      // 高亮失败时回退到原始渲染
+    }
+  }
+  return originalCodeRenderer(code, lang, _escaped);
+};
+
+marked.setOptions({
+  renderer,
+  breaks: true,
+  gfm: true,
+});
+
   // 使用 marked 解析 Markdown 文本为 HTML，确保渲染极致流畅舒适
   const renderedHtml = marked.parse(content);
 
@@ -133,6 +158,7 @@ export default async function PostPage({ params }: PostPageProps) {
             className={`${styles.content} glass-card`}
             dangerouslySetInnerHTML={{ __html: renderedHtml }}
           />
+          <CodeCopyButton />
 
           {/* 互动双层嵌套评论区 */}
           <CommentsSection postSlug={meta.slug} />

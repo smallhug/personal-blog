@@ -12,6 +12,8 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "gray-matter": "^4.0.3",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.47",
     "marked": "^12.0.2",
     "next": "^16.2.6",
     "react": "^18.3.1",

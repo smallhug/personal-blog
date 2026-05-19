@@ -58,7 +58,6 @@ export default async function PostPage({ params }: PostPageProps) {
           meta.slug,
           ip
         );
-        console.log(`📝 [RawSQL 物理记录唯一 IP] Slug: ${meta.slug}, IP: ${ip}`);
       } catch (rawErr) {
         console.error('Raw SQL insert error:', rawErr);
       }

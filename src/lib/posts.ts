@@ -68,6 +68,30 @@ export interface PostMeta {
   readingTime: number;
 }
 
+function parseReadingTime(content: string): number {
+  const plainText = content.replace(/[#*`~\[\]\(\)\-\r\n\s|]+/g, '');
+  return Math.max(1, Math.ceil(plainText.length / 200));
+}
+
+function parseTags(tags: unknown): string[] {
+  if (!tags) return [];
+  return typeof tags === 'string'
+    ? tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean)
+    : Array.isArray(tags) ? tags : [];
+}
+
+function buildPostMeta(data: Record<string, unknown>, slug: string, content: string): Pick<PostMeta, 'title' | 'slug' | 'date' | 'tags' | 'status' | 'summary' | 'readingTime'> {
+  return {
+    title: (data.title as string) || '无标题文章',
+    slug: (data.slug as string) || slug,
+    date: (data.date as string) || new Date().toISOString(),
+    tags: parseTags(data.tags),
+    status: ((data.status as string) || 'DRAFT') as 'DRAFT' | 'PUBLISHED',
+    summary: (data.summary as string) || content.slice(0, 120).replace(/[#*`~]/g, '') + '...',
+    readingTime: parseReadingTime(content),
+  };
+}
+
 // 1. 获取所有博客文章列表
 export function getSortedPostsData(): PostMeta[] {
   ensureDirectoryExists();
@@ -83,27 +107,7 @@ export function getSortedPostsData(): PostMeta[] {
       // 使用 gray-matter 解析 Frontmatter
       const { data, content } = matter(fileContents);
 
-      // 计算预计阅读时间 (字数 / 200 字每分钟)
-      const plainText = content.replace(/[#*`~\[\]\(\)\-\r\n\s|]+/g, '');
-      const readingTime = Math.max(1, Math.ceil(plainText.length / 200));
-
-      // 解析标签
-      let tagsArray: string[] = [];
-      if (data.tags) {
-        tagsArray = typeof data.tags === 'string'
-          ? data.tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean)
-          : Array.isArray(data.tags) ? data.tags : [];
-      }
-
-      return {
-        title: data.title || '无标题文章',
-        slug: data.slug || slug,
-        date: data.date || new Date().toISOString(),
-        tags: tagsArray,
-        status: data.status || 'DRAFT',
-        summary: data.summary || content.slice(0, 120).replace(/[#*`~]/g, '') + '...',
-        readingTime,
-      };
+      return buildPostMeta(data, slug, content);
     });
 
   // 按日期降序排列
@@ -126,27 +130,8 @@ export function getPostData(slug: string) {
   const fileContents = fs.readFileSync(fullPath, 'utf8');
   const { data, content } = matter(fileContents);
 
-  // 计算字数及阅读时间
-  const plainText = content.replace(/[#*`~\[\]\(\)\-\r\n\s|]+/g, '');
-  const readingTime = Math.max(1, Math.ceil(plainText.length / 200));
-
-  let tagsArray: string[] = [];
-  if (data.tags) {
-    tagsArray = typeof data.tags === 'string'
-      ? data.tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean)
-      : Array.isArray(data.tags) ? data.tags : [];
-  }
-
   return {
-    meta: {
-      title: data.title || '无标题文章',
-      slug: data.slug || slug,
-      date: data.date || new Date().toISOString(),
-      tags: tagsArray,
-      status: data.status || 'DRAFT',
-      summary: data.summary || content.slice(0, 120).replace(/[#*`~]/g, '') + '...',
-      readingTime,
-    },
+    meta: buildPostMeta(data, slug, content),
     content,
   };
 }

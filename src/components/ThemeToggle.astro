@@ -1,0 +1,110 @@
+---
+// ThemeToggle.astro: 纯原生无框架开销的深浅色模式切换器
+---
+
+<button
+  id="theme-toggle-btn"
+  class="theme-toggle-btn flex-center"
+  aria-label="切换主题"
+  title="切换深色/浅色模式"
+>
+  <!-- 太阳图标 (暗黑模式下显示，点击切换为浅色) -->
+  <svg
+    id="theme-sun-icon"
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="sun-icon"
+  >
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2v2"></path>
+    <path d="M12 20v2"></path>
+    <path d="m4.93 4.93 1.41 1.41"></path>
+    <path d="m17.66 17.66 1.41 1.41"></path>
+    <path d="M2 12h2"></path>
+    <path d="M20 12h2"></path>
+    <path d="m6.34 17.66-1.41 1.41"></path>
+    <path d="m19.07 4.93-1.41 1.41"></path>
+  </svg>
+  <!-- 月亮图标 (浅色模式下显示，点击切换为深色) -->
+  <svg
+    id="theme-moon-icon"
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="moon-icon"
+  >
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+  </svg>
+</button>
+
+<style>
+  .theme-toggle-btn {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+  }
+
+  .theme-toggle-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--color-accent-1);
+  }
+
+  /* 主题图标自适应显隐 */
+  :global([data-theme="dark"]) #theme-moon-icon {
+    display: none;
+  }
+  :global([data-theme="dark"]) #theme-sun-icon {
+    display: block;
+  }
+
+  :global([data-theme="light"]) #theme-moon-icon {
+    display: block;
+  }
+  :global([data-theme="light"]) #theme-sun-icon {
+    display: none;
+  }
+</style>
+
+<script>
+  function setupThemeToggle() {
+    const btn = document.getElementById('theme-toggle-btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      document.body.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: next } }));
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupThemeToggle);
+  } else {
+    setupThemeToggle();
+  }
+</script>

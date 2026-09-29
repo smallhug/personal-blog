@@ -1,0 +1,60 @@
+---
+interface Props {
+  type?: 'page' | 'site';
+}
+
+const { type = 'page' } = Astro.props;
+---
+
+<span class="busuanzi-badge">
+  {type === 'page' ? (
+    <span id="busuanzi_container_page_pv" style="display:none">
+      <span class="view-icon">👁️</span>
+      <span id="busuanzi_value_page_pv">--</span> 次浏览
+    </span>
+  ) : (
+    <span id="busuanzi_container_site_pv" style="display:none">
+      <span class="view-icon">🌐</span>
+      总访问量 <span id="busuanzi_value_site_pv">--</span> 次
+    </span>
+  )}
+</span>
+
+<script>
+  // 生产环境自动加载不蒜子真实访问量；本地开发（localhost/127.0.0.1）避免读取到全球开发者的累加测试数据
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (!isLocal) {
+    const script = document.createElement('script');
+    script.src = '//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+    script.async = true;
+    document.head.appendChild(script);
+  } else {
+    // 本地开发友好展示真实本地次数，部署后将自动与 GitHub Pages 域名绑定真实统计
+    const sitePv = document.getElementById('busuanzi_value_site_pv');
+    const siteBox = document.getElementById('busuanzi_container_site_pv');
+    if (sitePv && siteBox) {
+      sitePv.textContent = '1';
+      siteBox.style.display = 'inline';
+      siteBox.title = '当前为本地环境，发布到 GitHub 域名后将从 1 开始实时累加真实访问量';
+    }
+    const pagePv = document.getElementById('busuanzi_value_page_pv');
+    const pageBox = document.getElementById('busuanzi_container_page_pv');
+    if (pagePv && pageBox) {
+      pagePv.textContent = '1';
+      pageBox.style.display = 'inline';
+    }
+  }
+</script>
+
+<style>
+  .busuanzi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .view-icon {
+    font-size: 0.9rem;
+  }
+</style>

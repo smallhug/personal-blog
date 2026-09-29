@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HomeContainer from '../components/HomeContainer.astro';
+
+// 获取所有已发布的文章
+const allPosts = await getCollection('posts');
+const publishedPosts = allPosts
+  .filter((post) => post.data.status === 'PUBLISHED')
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+// 统计标签云
+const tagCountMap: Record<string, number> = {};
+publishedPosts.forEach((post) => {
+  post.data.tags.forEach((tag) => {
+    tagCountMap[tag] = (tagCountMap[tag] || 0) + 1;
+  });
+});
+
+const tagList = Object.entries(tagCountMap)
+  .map(([name, count]) => ({ name, count }))
+  .sort((a, b) => b.count - a.count);
+
+// 格式化文章元数据供客户端组件使用
+const formattedPosts = publishedPosts.map((post) => {
+  const plainText = (post.body || '').replace(/[#*`~\[\]\(\)\-\r\n\s|]+/g, '');
+  const readingTime = Math.max(1, Math.ceil(plainText.length / 200));
+
+  return {
+    title: post.data.title,
+    slug: post.id,
+    date: post.data.date.toISOString(),
+    tags: post.data.tags,
+    status: post.data.status,
+    summary: post.data.summary || post.data.excerpt || ((post.body || '').slice(0, 120) + '...'),
+    readingTime,
+  };
+});
+---
+
+<BaseLayout
+  title="smallhug的数字空间：科技与艺术的重构边界"
+  description="探寻现代网页设计中的美学表达，融合极客视觉动效与舒适阅读体验。"
+>
+  <HomeContainer
+    initialPosts={formattedPosts}
+    tags={tagList}
+  />
+</BaseLayout>

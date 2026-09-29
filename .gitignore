@@ -8,8 +8,9 @@ node_modules/
 /.pnp
 .pnp.js
 
-# Next.js 构建输出与生产包 (Next.js Build Outputs)
+# Next.js & Astro 构建输出与生产包
 /.next/
+/.astro/
 /out/
 /build/
 /dist/

@@ -1,0 +1,123 @@
+---
+interface Props {
+  repo?: string;
+  repoId?: string;
+  category?: string;
+  categoryId?: string;
+}
+
+const {
+  repo = "smallhug/personal-blog",
+  repoId = "",
+  category = "Announcements",
+  categoryId = "",
+} = Astro.props;
+---
+
+<div class="giscus-section">
+  <div class="comments-header">
+    <div class="header-indicator"></div>
+    <h3 class="comments-title">
+      交流与评论
+      <span class="sub-tip">（基于 GitHub Discussions）</span>
+    </h3>
+  </div>
+
+  <div class="giscus-container">
+    <div class="giscus" id="giscus-slot"></div>
+  </div>
+</div>
+
+<style>
+  .giscus-section {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .comments-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .header-indicator {
+    width: 4px;
+    height: 18px;
+    background: var(--color-accent-1);
+    border-radius: 2px;
+  }
+
+  .comments-title {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .sub-tip {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-family: var(--font-primary);
+    font-weight: normal;
+  }
+
+  .giscus-container {
+    min-height: 150px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+  }
+</style>
+
+<script define:vars={{ repo, repoId, category, categoryId }}>
+  function getGiscusTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    return currentTheme === 'dark' ? 'dark_dimmed' : 'light';
+  }
+
+  function initGiscus() {
+    const container = document.getElementById('giscus-slot');
+    if (!container) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://giscus.app/client.js';
+    script.setAttribute('data-repo', repo);
+    if (repoId) script.setAttribute('data-repo-id', repoId);
+    script.setAttribute('data-category', category);
+    if (categoryId) script.setAttribute('data-category-id', categoryId);
+    script.setAttribute('data-mapping', 'pathname');
+    script.setAttribute('data-strict', '0');
+    script.setAttribute('data-reactions-enabled', '1');
+    script.setAttribute('data-emit-metadata', '0');
+    script.setAttribute('data-input-position', 'bottom');
+    script.setAttribute('data-theme', getGiscusTheme());
+    script.setAttribute('data-lang', 'zh-CN');
+    script.crossOrigin = 'anonymous';
+    script.async = true;
+
+    container.appendChild(script);
+  }
+
+  window.addEventListener('theme-changed', (e) => {
+    const iframe = document.querySelector('iframe.giscus-frame');
+    if (!iframe || !iframe.contentWindow) return;
+    const newTheme = e.detail?.theme === 'dark' ? 'dark_dimmed' : 'light';
+    iframe.contentWindow.postMessage(
+      { giscus: { setConfig: { theme: newTheme } } },
+      'https://giscus.app'
+    );
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGiscus);
+  } else {
+    initGiscus();
+  }
+</script>

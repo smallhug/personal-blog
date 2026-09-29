@@ -1,0 +1,276 @@
+---
+// InteractiveFluid.astro: 纯原生 Canvas 2D 物理流体交互背景 (零框架依赖)
+---
+
+<canvas id="particle-canvas"></canvas>
+
+<style>
+  #particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--bg-primary);
+    transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+</style>
+
+<script>
+  interface Particle {
+    x: number;
+    y: number;
+    prevX: number;
+    prevY: number;
+    vx: number;
+    vy: number;
+    life: number;
+    maxLife: number;
+  }
+
+  interface GridCell {
+    vx: number;
+    vy: number;
+  }
+
+  function initFluid() {
+    const canvas = document.getElementById('particle-canvas') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const ctx = canvas.getContext('2d', { alpha: false });
+    if (!ctx) return;
+
+    const cellSize = 40;
+    let cols = 0;
+    let rows = 0;
+    let grid: GridCell[][] = [];
+
+    const initGrid = () => {
+      cols = Math.ceil(window.innerWidth / cellSize);
+      rows = Math.ceil(window.innerHeight / cellSize);
+      grid = [];
+      for (let x = 0; x < cols; x++) {
+        grid[x] = [];
+        for (let y = 0; y < rows; y++) {
+          grid[x][y] = { vx: 0, vy: 0 };
+        }
+      }
+    };
+
+    const resizeCanvas = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      initGrid();
+    };
+    resizeCanvas();
+
+    let resizeTimer: number;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(resizeCanvas, 150);
+    });
+
+    let cachedBgPrimary = '#ffffff';
+    let cachedAccentColor = '#0f766e';
+
+    const updateCachedColors = () => {
+      try {
+        const htmlStyle = getComputedStyle(document.documentElement);
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        cachedBgPrimary = htmlStyle.getPropertyValue('--bg-primary').trim() || (isDark ? '#09090b' : '#ffffff');
+        cachedAccentColor = htmlStyle.getPropertyValue('--color-accent-1').trim() || (isDark ? '#14b8a6' : '#0f766e');
+      } catch {}
+    };
+    updateCachedColors();
+    window.addEventListener('theme-changed', updateCachedColors);
+
+    const themeObserver = new MutationObserver(updateCachedColors);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    const particleCount = Math.min(480, Math.floor(window.innerWidth * 0.35));
+    const particles: Particle[] = [];
+
+    const createParticle = (): Particle => {
+      const rx = Math.random() * window.innerWidth;
+      const ry = Math.random() * window.innerHeight;
+      return {
+        x: rx,
+        y: ry,
+        prevX: rx,
+        prevY: ry,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 1.5,
+        life: 0,
+        maxLife: 120,
+      };
+    };
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(createParticle());
+    }
+
+    const mouse = {
+      x: 0,
+      y: 0,
+      prevX: 0,
+      prevY: 0,
+      vx: 0,
+      vy: 0,
+      isFirst: true,
+    };
+
+    const injectVelocity = (clientX: number, clientY: number) => {
+      if (mouse.isFirst) {
+        mouse.prevX = clientX;
+        mouse.prevY = clientY;
+        mouse.isFirst = false;
+      } else {
+        mouse.prevX = mouse.x;
+        mouse.prevY = mouse.y;
+      }
+      mouse.x = clientX;
+      mouse.y = clientY;
+
+      const dx = mouse.x - mouse.prevX;
+      const dy = mouse.y - mouse.prevY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist > 0.1) {
+        const baseForce = 2.0;
+        mouse.vx = (dx / dist) * baseForce + dx * 0.15;
+        mouse.vy = (dy / dist) * baseForce + dy * 0.15;
+      } else {
+        mouse.vx = 0;
+        mouse.vy = 0;
+      }
+
+      const influenceRadius = 150;
+      for (let x = 0; x < cols; x++) {
+        for (let y = 0; y < rows; y++) {
+          const cellCenterX = x * cellSize + cellSize / 2;
+          const cellCenterY = y * cellSize + cellSize / 2;
+          const gridDx = cellCenterX - mouse.x;
+          const gridDy = cellCenterY - mouse.y;
+          const gridDist = Math.sqrt(gridDx * gridDx + gridDy * gridDy);
+
+          if (gridDist < influenceRadius) {
+            const force = (1 - gridDist / influenceRadius) * 0.45;
+            grid[x][y].vx += mouse.vx * force;
+            grid[x][y].vy += mouse.vy * force;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', (e) => injectVelocity(e.clientX, e.clientY), { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) injectVelocity(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    window.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) {
+        mouse.x = e.touches[0].clientX;
+        mouse.y = e.touches[0].clientY;
+        mouse.prevX = mouse.x;
+        mouse.prevY = mouse.y;
+        mouse.isFirst = false;
+      }
+    }, { passive: true });
+
+    let animId: number | null = null;
+    const updateFluid = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      ctx.fillStyle = cachedBgPrimary;
+      ctx.globalAlpha = 0.08;
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalAlpha = 1.0;
+
+      const time = Date.now() * 0.0005;
+      for (let x = 0; x < cols; x++) {
+        for (let y = 0; y < rows; y++) {
+          const cell = grid[x][y];
+          if (!cell) continue;
+
+          cell.vx *= 0.98;
+          cell.vy *= 0.98;
+
+          const windAngle = Math.sin(x * 0.15 + time) * Math.cos(y * 0.15 + time) * Math.PI * 2;
+          cell.vx += Math.cos(windAngle) * 0.025;
+          cell.vy += Math.sin(windAngle) * 0.025;
+        }
+      }
+
+      ctx.strokeStyle = cachedAccentColor;
+      ctx.lineWidth = 1.35;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.life++;
+        p.prevX = p.x;
+        p.prevY = p.y;
+
+        const cellX = Math.floor(p.x / cellSize);
+        const cellY = Math.floor(p.y / cellSize);
+
+        if (cellX >= 0 && cellX < cols && cellY >= 0 && cellY < rows && grid[cellX]?.[cellY]) {
+          const cellV = grid[cellX][cellY];
+          p.vx += (cellV.vx - p.vx) * 0.08;
+          p.vy += (cellV.vy - p.vy) * 0.08;
+        }
+
+        p.vx += (Math.random() - 0.5) * 0.35;
+        p.vy += (Math.random() - 0.5) * 0.35;
+        p.vx *= 0.99;
+        p.vy *= 0.99;
+        p.vy -= 0.015;
+
+        const speedScale = 0.6;
+        p.x += p.vx * speedScale;
+        p.y += p.vy * speedScale;
+
+        const isOutOfBounds = p.x < 0 || p.x > width || p.y < 0 || p.y > height;
+        if (p.life >= p.maxLife || isOutOfBounds) {
+          particles[i] = createParticle();
+          continue;
+        }
+
+        ctx.globalAlpha = 0.36 * (1 - p.life / p.maxLife);
+        ctx.beginPath();
+        ctx.moveTo(p.prevX, p.prevY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1.0;
+
+      animId = requestAnimationFrame(updateFluid);
+    };
+
+    animId = requestAnimationFrame(updateFluid);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (animId) {
+          cancelAnimationFrame(animId);
+          animId = null;
+        }
+      } else {
+        if (!animId) {
+          animId = requestAnimationFrame(updateFluid);
+        }
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFluid);
+  } else {
+    initFluid();
+  }
+</script>

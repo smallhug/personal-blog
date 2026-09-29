@@ -1,0 +1,121 @@
+---
+import Navbar from '../components/Navbar.astro';
+import InteractiveFluid from '../components/InteractiveFluid.astro';
+import FloatingHub from '../components/FloatingHub.astro';
+import BusuanziCounter from '../components/BusuanziCounter.astro';
+import '../styles/globals.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  article?: boolean;
+}
+
+const {
+  title = "smallhug的数字空间：科技与艺术的重构边界",
+  description = "探寻现代网页设计中的美学表达，融合极客视觉动效与舒适阅读体验。",
+  image = "/favicon.png",
+  article = false,
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://smallhug.github.io');
+const socialImageURL = new URL(image, Astro.site || 'https://smallhug.github.io');
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="canonical" href={canonicalURL} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title="smallhug的数字空间" href="/rss.xml" />
+
+    <!-- 基础 SEO -->
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta name="author" content="smallhug" />
+
+    <!-- Open Graph / Facebook / 微信 -->
+    <meta property="og:type" content={article ? "article" : "website"} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={socialImageURL} />
+    <meta property="og:locale" content="zh_CN" />
+
+    <!-- Twitter / X -->
+    <meta property="twitter:card" content="summary" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={socialImageURL} />
+
+    <!-- KaTeX 数学公式渲染样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous">
+
+    <!-- 防闪烁内联主题脚本 (FOUC Prevention) -->
+    <script is:inline>
+      (function() {
+        try {
+          var saved = localStorage.getItem('theme');
+          var theme = saved || 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.body && document.body.setAttribute('data-theme', theme);
+        } catch(e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <!-- 物理流体 Canvas 粒子背景 (零框架纯原生 Canvas) -->
+    <div id="particle-canvas-container">
+      <InteractiveFluid />
+    </div>
+
+    <div class="app-container">
+      <Navbar />
+
+      <main class="main-content">
+        <slot />
+      </main>
+
+      <footer class="footer">
+        <div class="footer-inner">
+          <p>© {new Date().getFullYear()} smallhug · 使用 Astro 架构</p>
+          <div class="footer-sub">
+            <a href="https://github.com/smallhug/personal-blog" target="_blank" rel="noreferrer" class="footer-link">
+              GitHub 地址
+            </a>
+            <span class="dot">·</span>
+            <BusuanziCounter type="site" />
+          </div>
+        </div>
+      </footer>
+
+      <!-- 悬浮圆环阅读进度与回到顶部 (纯原生交互) -->
+      <FloatingHub />
+    </div>
+  </body>
+</html>
+
+<style>
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .footer-sub {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+  .dot {
+    color: var(--text-auxiliary);
+  }
+</style>

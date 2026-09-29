@@ -1,0 +1,198 @@
+---
+interface Props {
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { headings = [] } = Astro.props;
+const filteredHeadings = headings.filter((h) => h.depth >= 1 && h.depth <= 3);
+---
+
+{filteredHeadings.length > 0 && (
+  <nav class="toc-wrapper" aria-label="文章目录">
+    <h3 class="title">文章目录</h3>
+    <ul class="list">
+      {filteredHeadings.map((item) => (
+        <li class={`item level-${item.depth}`}>
+          <a href={`#${item.slug}`} class="link" data-slug={item.slug}>
+            <span class="indicator" />
+            <span class="link-text">{item.text}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<style>
+  .toc-wrapper {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    position: sticky;
+    top: 90px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: var(--transition-smooth);
+  }
+
+  .title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    padding-bottom: 0.5rem;
+  }
+
+  .title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 32px;
+    height: 2px;
+    background: var(--color-accent-1);
+  }
+
+  .list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0;
+    margin: 0;
+  }
+
+  .item {
+    position: relative;
+    transition: var(--transition-fast);
+  }
+
+  .level-1 {
+    padding-left: 0;
+  }
+
+  .level-2 {
+    padding-left: 0.85rem;
+  }
+
+  .level-3 {
+    padding-left: 1.6rem;
+  }
+
+  .link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition-fast);
+    line-height: 1.4;
+  }
+
+  .indicator {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    display: inline-block;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+  }
+
+  .item.active .link {
+    color: var(--color-accent-1);
+    font-weight: 600;
+  }
+
+  .item.active .indicator {
+    background: var(--color-accent-1);
+    transform: scale(1.6);
+  }
+
+  .item:hover .link {
+    color: var(--text-primary);
+    transform: translateX(3px);
+  }
+
+  .item:hover .indicator {
+    background: var(--text-primary);
+  }
+
+  .toc-wrapper::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .toc-wrapper::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+  }
+</style>
+
+<script>
+  function initTocSpy() {
+    const links = document.querySelectorAll<HTMLAnchorElement>('.toc-wrapper .link');
+    if (!links.length) return;
+
+    // 智能平滑滚动并避开 sticky 顶栏遮挡
+    links.forEach((link) => {
+      link.addEventListener('click', (e) => {
+        const slug = link.getAttribute('data-slug');
+        if (!slug) return;
+        const target = document.getElementById(slug);
+        if (target) {
+          e.preventDefault();
+          const offset = 90;
+          const targetTop = target.getBoundingClientRect().top + window.scrollY - offset;
+          window.scrollTo({ top: targetTop, behavior: 'smooth' });
+          history.pushState(null, '', `#${slug}`);
+        }
+      });
+    });
+
+    // 滚动高亮监听器
+    const headings = Array.from(links)
+      .map((l) => {
+        const id = l.getAttribute('data-slug');
+        return id ? document.getElementById(id) : null;
+      })
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (!headings.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length > 0) {
+          const topVisible = visible.reduce((prev, curr) =>
+            prev.boundingClientRect.top < curr.boundingClientRect.top ? prev : curr
+          );
+          const activeSlug = topVisible.target.id;
+          links.forEach((l) => {
+            const isMatch = l.getAttribute('data-slug') === activeSlug;
+            l.parentElement?.classList.toggle('active', isMatch);
+          });
+        }
+      },
+      {
+        rootMargin: '0px 0px -65% 0px',
+        threshold: 1.0,
+      }
+    );
+
+    headings.forEach((h) => observer.observe(h));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTocSpy);
+  } else {
+    initTocSpy();
+  }
+</script>

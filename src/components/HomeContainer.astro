@@ -1,0 +1,666 @@
+---
+import { formatToChineseDateTime } from '../lib/date';
+
+export interface PostMeta {
+  title: string;
+  slug: string;
+  date: string;
+  tags: string[];
+  status: string;
+  summary: string;
+  readingTime: number;
+}
+
+export interface TagCloudItem {
+  name: string;
+  count: number;
+}
+
+interface Props {
+  initialPosts: PostMeta[];
+  tags: TagCloudItem[];
+}
+
+const { initialPosts, tags } = Astro.props;
+const totalPublished = initialPosts.length;
+---
+
+<div class="home-container">
+  <!-- 筛选与搜索工具条 -->
+  <div class="toolbar-section">
+    <div class="toolbar-row">
+      <!-- 标签分类快速切换 -->
+      <div class="tag-filters">
+        <button class="tag-filter-btn active-tag" data-tag="ALL">
+          全部
+          <span class="tag-filter-count">{totalPublished}</span>
+        </button>
+        {tags.map((tag) => (
+          <button class="tag-filter-btn" data-tag={tag.name}>
+            #{tag.name}
+            <span class="tag-filter-count">{tag.count}</span>
+          </button>
+        ))}
+      </div>
+
+      <!-- 右侧可展开搜索组件 -->
+      <div id="search-box" class="search-box">
+        <input
+          id="search-input"
+          type="text"
+          placeholder="搜索文章..."
+          class="search-input"
+          autocomplete="off"
+        />
+        <button id="search-toggle-btn" class="search-btn" aria-label="搜索文章" title="点击展开搜索">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 搜索命中状态展示栏 -->
+    <div id="search-status" class="search-status" style="display: none;">
+      <span class="search-label">正在展示 🔎 搜索: "<span id="search-keyword"></span>"</span>
+      <span class="list-count">（找到 <span id="search-match-count">0</span> 篇相关文章）</span>
+      <button id="reset-search-btn" class="reset-btn">清除搜索 ×</button>
+    </div>
+  </div>
+
+  <!-- 文章列表：卡片式流布局 -->
+  <div id="posts-list" class="posts-list">
+    <div id="empty-state" class="empty-state glass-card" style="display: none;">
+      <span class="empty-icon">🛸</span>
+      <p>没有找到相关文章，换个搜索词或标签试试吧。</p>
+    </div>
+
+    {initialPosts.map((post, idx) => {
+      const isTop = idx === 0;
+
+      return (
+        <article
+          class={`post-card glass-card ${isTop ? 'featured-card' : ''}`}
+          data-slug={post.slug}
+          data-title={post.title.toLowerCase()}
+          data-summary={post.summary.toLowerCase()}
+          data-tags={post.tags.join(',').toLowerCase()}
+        >
+          {isTop && (
+            <div class="featured-badge">
+              <span>FEATURED · 最新精选</span>
+            </div>
+          )}
+
+          <div class="post-card-body">
+            <h2 class={`post-title ${isTop ? 'top-title' : ''}`}>
+              <a href={`/posts/${post.slug}`} class="post-link">
+                {post.title}
+              </a>
+            </h2>
+
+            <p class="post-summary">
+              {post.summary.length > 120 ? `${post.summary.slice(0, 120)}...` : post.summary}
+            </p>
+
+            <div class="post-meta">
+              <span class="meta-date">
+                {formatToChineseDateTime(post.date)}
+              </span>
+              <span class="dot">·</span>
+              <span class="meta-time">约 {post.readingTime} 分钟阅读</span>
+
+              {post.tags.length > 0 && (
+                <div class="meta-tags">
+                  {post.tags.map((t) => (
+                    <span class="tag-badge">#{t}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </article>
+      );
+    })}
+  </div>
+
+  <!-- 极简分页导航 -->
+  <div id="pagination-nav" class="pagination">
+    <button id="prev-page-btn" class="page-btn" disabled>← 上一页</button>
+    <span class="page-indicator"><span id="current-page-text">1</span> / <span id="total-page-text">1</span></span>
+    <button id="next-page-btn" class="page-btn">下一页 →</button>
+  </div>
+</div>
+
+<style>
+  .home-container {
+    max-width: 920px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* 搜索与工具条 */
+  .toolbar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .tag-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .tag-filter-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    padding: 0.35rem 0.85rem;
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-primary);
+  }
+
+  .tag-filter-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--color-accent-1);
+  }
+
+  .active-tag {
+    background: var(--color-accent-1) !important;
+    color: #ffffff !important;
+    border-color: var(--color-accent-1) !important;
+    font-weight: 600;
+  }
+
+  .tag-filter-count {
+    opacity: 0.8;
+    font-size: 0.75rem;
+  }
+
+  /* 可展开搜索框：未展开时为标准正圆 */
+  .search-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.3s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: var(--glass-shadow);
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .search-box.expanded,
+  .search-box:focus-within {
+    width: 240px;
+    border-radius: 99px;
+    padding: 0 0.25rem 0 0.85rem;
+    justify-content: space-between;
+    border-color: var(--color-accent-1);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+  }
+
+  .search-input {
+    width: 0;
+    opacity: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-family: var(--font-primary);
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+    padding: 0;
+  }
+
+  .search-box.expanded .search-input,
+  .search-input:focus {
+    width: 100%;
+    opacity: 1;
+    padding-right: 0.35rem;
+  }
+
+  .search-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  .search-btn:hover {
+    color: var(--color-accent-1);
+    background: var(--bg-tertiary);
+  }
+
+  .search-box.expanded .search-btn {
+    color: var(--color-accent-1);
+  }
+
+  .search-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--glass-border);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .search-label {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .reset-btn {
+    background: transparent;
+    border: 1px dashed var(--color-accent-1);
+    color: var(--color-accent-1);
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    margin-left: auto;
+  }
+
+  .reset-btn:hover {
+    background: var(--color-accent-1);
+    color: white;
+  }
+
+  /* 文章卡片流 (定宽无抖动) */
+  .posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+  }
+
+  .empty-state {
+    padding: 3.5rem 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .empty-icon {
+    font-size: 2rem;
+  }
+
+  .post-card {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1.6rem 1.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: var(--transition-smooth);
+    border: 1px solid var(--glass-border);
+    min-width: 0;
+  }
+
+  .post-card-body {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .post-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--glass-highlight);
+  }
+
+  .featured-card {
+    background: linear-gradient(135deg, var(--glass-bg) 0%, rgba(15, 118, 110, 0.03) 100%);
+  }
+
+  .featured-badge {
+    align-self: flex-start;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-accent-1);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .post-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.45;
+    margin: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .top-title {
+    font-family: var(--font-serif);
+    font-size: 1.45rem;
+  }
+
+  .post-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: var(--transition-fast);
+  }
+
+  .post-link:hover {
+    color: var(--color-accent-1);
+  }
+
+  .post-summary {
+    color: var(--text-secondary);
+    font-size: 0.93rem;
+    line-height: 1.65;
+    margin: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+  }
+
+  .dot {
+    color: var(--text-auxiliary);
+  }
+
+  .meta-tags {
+    display: flex;
+    gap: 0.4rem;
+    margin-left: auto;
+  }
+
+  .tag-badge {
+    color: var(--color-accent-1);
+    background: var(--color-accent-light);
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  /* 分页按钮 */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .page-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 0.5rem 1.15rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+  }
+
+  .page-btn:hover:not(:disabled) {
+    background: var(--color-accent-1);
+    color: white;
+    border-color: var(--color-accent-1);
+  }
+
+  .page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .page-indicator {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  @media (max-width: 640px) {
+    .toolbar-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .search-box {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .search-input {
+      width: 100% !important;
+      opacity: 1 !important;
+      padding-right: 0.5rem;
+    }
+
+    .post-card {
+      padding: 1.25rem;
+    }
+
+    .meta-tags {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  function setupHomeFilter() {
+    const postElements = Array.from(document.querySelectorAll<HTMLElement>('.post-card'));
+    if (!postElements.length) return;
+
+    const postsPerPage = 6;
+    let currentPage = 1;
+    let selectedTag = 'ALL';
+    let searchQuery = '';
+
+    const searchBox = document.getElementById('search-box');
+    const searchInput = document.getElementById('search-input') as HTMLInputElement;
+    const searchToggleBtn = document.getElementById('search-toggle-btn');
+    const searchStatus = document.getElementById('search-status');
+    const searchKeyword = document.getElementById('search-keyword');
+    const searchMatchCount = document.getElementById('search-match-count');
+    const resetSearchBtn = document.getElementById('reset-search-btn');
+    const emptyState = document.getElementById('empty-state');
+    const prevBtn = document.getElementById('prev-page-btn') as HTMLButtonElement;
+    const nextBtn = document.getElementById('next-page-btn') as HTMLButtonElement;
+    const currentPageText = document.getElementById('current-page-text');
+    const totalPageText = document.getElementById('total-page-text');
+    const paginationNav = document.getElementById('pagination-nav');
+    const tagButtons = document.querySelectorAll<HTMLButtonElement>('.tag-filter-btn');
+
+    // 检查 URL query 初始化搜索
+    const params = new URLSearchParams(window.location.search);
+    const qParam = params.get('q');
+    if (qParam) {
+      searchQuery = qParam.trim().toLowerCase();
+      if (searchInput) searchInput.value = qParam.trim();
+      searchBox?.classList.add('expanded');
+    }
+
+    const render = () => {
+      const matched = postElements.filter((el) => {
+        const title = el.getAttribute('data-title') || '';
+        const summary = el.getAttribute('data-summary') || '';
+        const tags = el.getAttribute('data-tags') || '';
+
+        const matchesTag = selectedTag === 'ALL' || tags.includes(selectedTag.toLowerCase());
+        const matchesQuery = !searchQuery || title.includes(searchQuery) || summary.includes(searchQuery) || tags.includes(searchQuery);
+
+        return matchesTag && matchesQuery;
+      });
+
+      const totalPages = Math.max(1, Math.ceil(matched.length / postsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      if (searchStatus && searchKeyword && searchMatchCount) {
+        if (searchQuery) {
+          searchStatus.style.display = 'flex';
+          searchKeyword.textContent = searchQuery;
+          searchMatchCount.textContent = `${matched.length}`;
+        } else {
+          searchStatus.style.display = 'none';
+        }
+      }
+
+      if (emptyState) {
+        emptyState.style.display = matched.length === 0 ? 'flex' : 'none';
+      }
+
+      postElements.forEach((el) => {
+        el.style.display = 'none';
+      });
+
+      const start = (currentPage - 1) * postsPerPage;
+      const end = start + postsPerPage;
+      matched.slice(start, end).forEach((el) => {
+        el.style.display = 'flex';
+      });
+
+      if (currentPageText) currentPageText.textContent = `${currentPage}`;
+      if (totalPageText) totalPageText.textContent = `${totalPages}`;
+      if (prevBtn) prevBtn.disabled = currentPage <= 1;
+      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+      if (paginationNav) paginationNav.style.display = totalPages > 1 ? 'flex' : 'none';
+    };
+
+    // 搜索按钮点击展开/折叠与聚焦
+    searchToggleBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isExpanded = searchBox?.classList.contains('expanded');
+      if (isExpanded) {
+        if (!searchInput?.value.trim()) {
+          searchBox?.classList.remove('expanded');
+        } else {
+          searchInput?.focus();
+        }
+      } else {
+        searchBox?.classList.add('expanded');
+        setTimeout(() => searchInput?.focus(), 100);
+      }
+    });
+
+    // 搜索输入即时响应
+    searchInput?.addEventListener('input', () => {
+      searchQuery = searchInput.value.trim().toLowerCase();
+      currentPage = 1;
+      render();
+    });
+
+    // 点击外部自动折叠（如果无输入内容）
+    document.addEventListener('click', (e) => {
+      if (!searchBox?.contains(e.target as Node) && !searchInput?.value.trim()) {
+        searchBox?.classList.remove('expanded');
+      }
+    });
+
+    // 标签切换
+    tagButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tag = btn.getAttribute('data-tag') || 'ALL';
+        selectedTag = tag;
+        currentPage = 1;
+
+        tagButtons.forEach((b) => b.classList.remove('active-tag'));
+        btn.classList.add('active-tag');
+        render();
+      });
+    });
+
+    // 清除搜索重置
+    resetSearchBtn?.addEventListener('click', () => {
+      searchQuery = '';
+      if (searchInput) searchInput.value = '';
+      currentPage = 1;
+      history.pushState(null, '', window.location.pathname);
+      render();
+    });
+
+    // 分页
+    prevBtn?.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      currentPage++;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    render();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupHomeFilter);
+  } else {
+    setupHomeFilter();
+  }
+</script>

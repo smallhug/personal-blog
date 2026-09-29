@@ -1,0 +1,162 @@
+---
+// CodeCopyButton.astro: 极客风 macOS 终端代码窗口与一键复制功能
+---
+
+<style is:global>
+  #article-content pre {
+    position: relative;
+    padding-top: 2.6rem !important;
+    overflow-x: auto;
+  }
+
+  .code-window-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.15rem;
+    padding: 0 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(125, 125, 125, 0.05);
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+    user-select: none;
+  }
+
+  .code-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .dot-mac {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .dot-red { background: #ff5f56; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #27c93f; }
+
+  .code-lang-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+
+  .copy-code-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition-fast);
+  }
+
+  .copy-code-btn:hover {
+    color: var(--color-accent-1);
+    background: var(--color-accent-light);
+    border-color: var(--glass-border);
+  }
+
+  .copy-code-btn.copied {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+  }
+</style>
+
+<script>
+  function setupCopyButtons() {
+    const content = document.getElementById('article-content');
+    if (!content) return;
+
+    const pres = content.querySelectorAll('pre');
+    pres.forEach((pre) => {
+      if (pre.querySelector('.code-window-bar')) return;
+
+      // 解析代码块语言标签
+      const code = pre.querySelector('code');
+      let lang = 'CODE';
+      if (code) {
+        const classes = Array.from(code.classList);
+        const langClass = classes.find((c) => c.startsWith('language-'));
+        if (langClass) {
+          lang = langClass.replace('language-', '').toUpperCase();
+        }
+      }
+
+      // 构建 macOS 终端风格顶栏
+      const bar = document.createElement('div');
+      bar.className = 'code-window-bar';
+      bar.innerHTML = `
+        <div class="code-dots">
+          <span class="dot-mac dot-red"></span>
+          <span class="dot-mac dot-yellow"></span>
+          <span class="dot-mac dot-green"></span>
+        </div>
+        <span class="code-lang-tag">${lang}</span>
+      `;
+
+      // 构建复制按钮
+      const btn = document.createElement('button');
+      btn.className = 'copy-code-btn';
+      btn.setAttribute('aria-label', '复制代码');
+      btn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span>复制</span>
+      `;
+
+      btn.addEventListener('click', async () => {
+        if (!code) return;
+        try {
+          await navigator.clipboard.writeText(code.innerText);
+          btn.classList.add('copied');
+          btn.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>已复制</span>
+          `;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>复制</span>
+            `;
+          }, 2000);
+        } catch (e) {
+          console.error('复制代码失败', e);
+        }
+      });
+
+      bar.appendChild(btn);
+      pre.insertBefore(bar, pre.firstChild);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupCopyButtons);
+  } else {
+    setupCopyButtons();
+  }
+</script>

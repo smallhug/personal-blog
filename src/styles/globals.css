@@ -1,47 +1,71 @@
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
-/* 管理后台设计令牌系统 */
-@import './admin-design-tokens.css';
-
-/* 管理后台微交互增强 */
-@import './admin-interactions.css';
-
 /* 全局极简主义设计系统 - 珍珠白、灰度字阶与人文松石青配色 */
 :root {
-  --font-primary: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-primary: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   --font-serif: 'Lora', 'Georgia', serif;
-  
+  --font-mono: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
+
+  /* 标准黄金比例版心宽度 */
+  --container-max-width: 1140px;
+  --reading-max-width: 820px;
+
   /* 纯净纸张白基调与深浅灰阶 */
   --bg-primary: #ffffff;
   --bg-secondary: #fafafa;
   --bg-tertiary: #f4f4f5;
-  
+
   --text-primary: #18181b;      /* zinc-900 */
   --text-secondary: #3f3f46;    /* zinc-700 */
   --text-muted: #71717a;        /* zinc-500 */
   --text-auxiliary: #a1a1aa;    /* zinc-400 */
-  
+
   /* 挑选唯一低饱和度强调色：松石石青 Muted Teal */
   --color-accent-1: #0f766e;    /* teal-700 */
   --color-accent-2: #115e59;    /* teal-800 */
   --color-accent-3: #0d9488;    /* teal-600 */
-  
+  --color-accent-light: rgba(15, 118, 110, 0.08);
+
   --gradient-primary: var(--color-accent-1);
   --gradient-text: var(--color-accent-1);
-  
-  /* 极细分隔边线，无任何投影和阴影 */
-  --glass-bg: #ffffff;
+
+  /* 极细分隔边线与现代通透毛玻璃 */
+  --glass-bg: rgba(255, 255, 255, 0.82);
   --glass-border: #eaeaea;
-  --glass-highlight: transparent;
-  --glass-shadow: none;
-  
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  
+  --glass-highlight: rgba(15, 118, 110, 0.15);
+  --glass-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+  --card-hover-shadow: 0 10px 25px -4px rgba(15, 118, 110, 0.08);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
   --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-fast: all 0.15s ease;
+}
+
+/* 深色模式设计令牌 (Dark Theme) */
+[data-theme="dark"], body[data-theme="dark"] {
+  --bg-primary: #09090b;
+  --bg-secondary: #121215;
+  --bg-tertiary: #18181b;
+
+  --text-primary: #f4f4f5;      /* zinc-100 */
+  --text-secondary: #d4d4d8;    /* zinc-300 */
+  --text-muted: #a1a1aa;        /* zinc-400 */
+  --text-auxiliary: #71717a;    /* zinc-500 */
+
+  --color-accent-1: #14b8a6;    /* teal-500 */
+  --color-accent-2: #2dd4bf;    /* teal-400 */
+  --color-accent-3: #0d9488;    /* teal-600 */
+  --color-accent-light: rgba(20, 184, 166, 0.12);
+
+  --glass-bg: rgba(18, 18, 21, 0.82);
+  --glass-border: #27272a;
+  --glass-highlight: rgba(20, 184, 166, 0.25);
+  --glass-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25);
+  --card-hover-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.4);
 }
 
 /* 基础重置 */
@@ -55,23 +79,27 @@ html {
   scroll-behavior: smooth;
   font-size: 16px;
   background-color: transparent;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
 }
 
 body {
   background-color: transparent;
   color: var(--text-primary);
   font-family: var(--font-primary);
-  line-height: 1.6;
+  line-height: 1.7;
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
   transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* 自定义优美滚动条 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -81,7 +109,7 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--bg-tertiary);
   border-radius: var(--radius-sm);
-  border: 2px solid var(--bg-primary);
+  border: 1px solid var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -121,10 +149,10 @@ body {
 }
 
 .navbar-inner {
-  max-width: 70%;
+  max-width: var(--container-max-width);
   width: 100%;
   margin: 0 auto;
-  padding: 1.25rem 2rem;
+  padding: 0.95rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -132,7 +160,7 @@ body {
 
 .nav-logo {
   font-family: var(--font-serif);
-  font-size: 1.65rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--text-primary);
   text-decoration: none;
@@ -141,7 +169,7 @@ body {
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
   list-style: none;
   align-items: center;
 }
@@ -150,7 +178,7 @@ body {
   color: var(--text-secondary);
   text-decoration: none;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   transition: var(--transition-fast);
   position: relative;
 }
@@ -166,7 +194,7 @@ body {
   left: 0;
   width: 0;
   height: 2px;
-  background: var(--gradient-primary);
+  background: var(--color-accent-1);
   transition: var(--transition-fast);
 }
 
@@ -174,85 +202,45 @@ body {
   width: 100%;
 }
 
-.btn-admin {
-  background: var(--color-accent-1);
-  color: white;
-  padding: 0.5rem 1.25rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 600;
+.theme-toggle-btn {
+  background: transparent;
   border: none;
+  outline: none;
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: var(--transition-fast);
 }
 
-.btn-admin:hover {
-  background: var(--color-accent-2);
-  transform: translateY(-1px);
+.theme-toggle-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--color-accent-1);
 }
 
-/* 主内容区域 */
+/* 主内容区域 - 舒适标准版心 */
 .main-content {
   flex: 1;
-  max-width: 70%;
+  max-width: var(--container-max-width);
   width: 100%;
   margin: 0 auto;
-  padding: 3rem 2rem;
-}
-
-/* 彻底锁死后台顶级视口高度，防止整体发生位移滚动，实现侧栏与顶栏绝对静止 */
-.app-container:has(.admin-root-container) {
-  height: 100vh !important;
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-/* 当主内容区域中包含管理后台时，覆盖为 100% 宽度与固定高度，禁止全局滚动 */
-.app-container:has(.admin-root-container) .main-content {
-  max-width: 100% !important;
-  width: calc(100% - 10px) !important;
-  margin-left: 5px !important;
-  margin-right: 5px !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding: 0 !important;
-  background: transparent !important; /* 完全透视底层粒子 */
-  
-  height: calc(100vh - 72px) !important; /* 精确等于除去顶栏后的视口高度 */
-  overflow: hidden !important; /* 彻底禁止全局滚动 */
-}
-
-/* 控制台内所有卡片、面板和组件的极客透明毛玻璃覆盖，确保粒子效果完美穿透 */
-.admin-root-container .glass-card,
-.admin-root-container [class*="card"],
-.admin-root-container [class*="Card"],
-.admin-root-container [class*="container"],
-.admin-root-container [class*="Container"] {
-  background-color: var(--admin-bg-glass) !important;
-  backdrop-filter: var(--admin-glass-blur) !important;
-  -webkit-backdrop-filter: var(--admin-glass-blur) !important;
-  border-color: var(--admin-glass-border) !important;
-  box-shadow: none !important;
-}
-
-.admin-root-container {
-  background: transparent !important;
-}
-
-/* 在管理后台中隐藏前台的全局页脚，防止撑开页面高度 */
-.app-container:has(.admin-root-container) .footer {
-  display: none !important;
+  padding: 2.5rem 1.5rem 4rem;
 }
 
 /* 页脚 */
 .footer {
-  background: var(--bg-secondary);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--glass-border);
-  padding: 2.5rem 2rem;
+  padding: 2.25rem 1.5rem;
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   margin-top: auto;
 }
 
@@ -266,62 +254,50 @@ body {
   color: var(--color-accent-1);
 }
 
-/* 彩色标题字（松石石青，无渐变） */
+/* 强调色标题 */
 .gradient-title {
   color: var(--color-accent-1);
   display: inline-block;
 }
 
-/* 滚动显现通用动画类 */
-.fade-in-element {
-  opacity: 0;
-  transform: translateY(30px);
-  animation: smoothFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes smoothFadeIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 极简卡片 */
+/* 极简毛玻璃卡片 */
 .glass-card {
-  background: var(--bg-secondary);
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: 2rem;
+  box-shadow: var(--glass-shadow);
   transition: var(--transition-smooth);
   position: relative;
   overflow: hidden;
 }
 
-.glass-card::before {
-  display: none;
-}
-
 .glass-card:hover {
-  border-color: var(--color-accent-1);
+  border-color: var(--glass-highlight);
+  box-shadow: var(--card-hover-shadow);
 }
 
-/* 排版工具与常用微调类 */
+/* 标签徽章 */
 .badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
   border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 500;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   border: 1px solid var(--glass-border);
   transition: var(--transition-fast);
+  text-decoration: none;
 }
 
 .badge:hover {
   background: var(--color-accent-1);
   color: white;
-  border-color: transparent;
+  border-color: var(--color-accent-1);
   transform: translateY(-1px);
 }
 
@@ -331,20 +307,21 @@ body {
   justify-content: center;
 }
 
-/* 按钮微动效 */
+/* 基础按钮 */
 .btn-primary {
   background: var(--color-accent-1);
   color: white;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-fast);
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  text-decoration: none;
 }
 
 .btn-primary:hover {
@@ -357,152 +334,16 @@ body {
 }
 
 /* 响应式调整 */
-@media (max-width: 1200px) {
-  .navbar-inner,
-  .main-content {
-    max-width: 90% !important;
-  }
-}
-
 @media (max-width: 768px) {
   .navbar-inner {
-    padding: 1rem;
-    flex-direction: column;
-    gap: 1rem;
+    padding: 0.75rem 1rem;
   }
-  
-  .nav-links {
-    gap: 1.25rem;
-    width: 100%;
-    justify-content: center;
-  }
-  
+
   .main-content {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 3rem;
   }
-}
 
-/* ==========================================
-   🌐 Markdown 内嵌原生 HTML 极客样式库支持 (免哈希全局类名)
-   ========================================== */
-
-/* 1. 精美松石青科技感提示卡片 */
-#article-content .custom-alert {
-  background: rgba(15, 118, 110, 0.04);
-  border-left: 4px solid var(--color-accent-1);
-  padding: 1.25rem 1.5rem;
-  border-radius: var(--radius-sm);
-  margin: 1.5rem 0;
-  backdrop-filter: blur(8px);
-}
-
-#article-content .custom-alert h4 {
-  margin-top: 0 !important;
-  margin-bottom: 0.5rem !important;
-  color: var(--color-accent-1) !important;
-  font-size: 1.05rem !important;
-  font-weight: 700 !important;
-}
-
-#article-content .custom-alert p {
-  margin: 0 !important;
-  font-size: 0.925rem !important;
-  color: var(--text-secondary) !important;
-  line-height: 1.6 !important;
-}
-
-/* 2. 暗色警告与警示卡 */
-#article-content .custom-warning {
-  background: rgba(239, 68, 68, 0.04);
-  border-left: 4px solid #ef4444;
-  padding: 1.25rem 1.5rem;
-  border-radius: var(--radius-sm);
-  margin: 1.5rem 0;
-  backdrop-filter: blur(8px);
-}
-
-#article-content .custom-warning h4 {
-  margin-top: 0 !important;
-  margin-bottom: 0.5rem !important;
-  color: #ef4444 !important;
-  font-size: 1.05rem !important;
-  font-weight: 700 !important;
-}
-
-#article-content .custom-warning p {
-  margin: 0 !important;
-  font-size: 0.925rem !important;
-  color: var(--text-secondary) !important;
-  line-height: 1.6 !important;
-}
-
-/* 3. 网格多栏排版 */
-#article-content .custom-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.25rem;
-  margin: 1.75rem 0;
-}
-
-#article-content .custom-grid-item {
-  background: var(--bg-secondary);
-  border: 1px solid var(--glass-border);
-  padding: 1.25rem;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  transition: border-color var(--transition-fast);
-}
-
-#article-content .custom-grid-item:hover {
-  border-color: var(--color-accent-1);
-}
-
-#article-content .custom-grid-item h5 {
-  margin-top: 0 !important;
-  margin-bottom: 0.5rem !important;
-  font-size: 0.95rem !important;
-  font-weight: 700 !important;
-  color: var(--text-primary) !important;
-}
-
-#article-content .custom-grid-item p {
-  margin: 0 !important;
-  font-size: 0.875rem !important;
-  color: var(--text-secondary) !important;
-  line-height: 1.5 !important;
-}
-
-/* 4. 响应式优雅视频/地图 iframe 容器 */
-#article-content .custom-iframe-container {
-  position: relative;
-  width: 100%;
-  padding-bottom: 56.25%; /* 16:9 自适应 */
-  height: 0;
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--glass-border);
-  margin: 1.75rem 0;
-}
-
-#article-content .custom-iframe-container iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-/* 5. 磨砂玻璃科技徽章 */
-#article-content .custom-tag {
-  display: inline-flex;
-  align-items: center;
-  background: rgba(15, 118, 110, 0.08);
-  color: var(--color-accent-1);
-  border: 1px solid rgba(15, 118, 110, 0.2);
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin: 0 0.25rem;
+  .glass-card {
+    padding: 1.25rem;
+  }
 }

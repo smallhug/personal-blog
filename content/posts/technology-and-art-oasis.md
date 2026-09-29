@@ -1,5 +1,5 @@
 ---
-title: "虫虫OvO的数字空间：科技与艺术的重构边界"
+title: "smallhug的数字空间：科技与艺术的重构边界"
 slug: "technology-and-art-oasis"
 date: "2026-05-17T19:53:12.779Z"
 tags: "生活, 科技, 艺术"

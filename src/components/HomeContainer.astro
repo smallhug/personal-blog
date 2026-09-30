@@ -81,9 +81,9 @@ const totalPublished = initialPosts.length;
 
   <!-- 文章列表：卡片式流布局 -->
   <div id="posts-list" class="posts-list">
-    <div id="empty-state" class="empty-state glass-card" style="display: none;">
+    <div id="empty-state" class="empty-state glass-card" style={totalPublished === 0 ? "display: flex;" : "display: none;"}>
       <span class="empty-icon">🛸</span>
-      <p>没有找到相关文章，换个搜索词或标签试试吧。</p>
+      <p>{totalPublished === 0 ? "暂无发布的文章，敬请期待！" : "没有找到相关文章，换个搜索词或标签试试吧。"}</p>
     </div>
 
     {initialPosts.map((post, idx) => {
@@ -136,7 +136,7 @@ const totalPublished = initialPosts.length;
   </div>
 
   <!-- 极简分页导航 -->
-  <div id="pagination-nav" class="pagination">
+  <div id="pagination-nav" class="pagination" style={totalPublished === 0 ? "display: none;" : ""}>
     <button id="prev-page-btn" class="page-btn" disabled>← 上一页</button>
     <span class="page-indicator"><span id="current-page-text">1</span> / <span id="total-page-text">1</span></span>
     <button id="next-page-btn" class="page-btn">下一页 →</button>

@@ -9,7 +9,7 @@ export async function GET(context: any) {
 
   return rss({
     title: 'smallhug的数字空间',
-    description: '探寻现代网页设计中的美学表达，融合极客视觉动效与舒适阅读体验。',
+    description: '一起来玩暗区喵~',
     site: context.site || 'https://smallhug.github.io',
     items: publishedPosts.map((post) => ({
       title: post.data.title,

@@ -7,7 +7,7 @@ import rehypeKatex from 'rehype-katex';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://smallhug.github.io',
-  base: '/personal-blog',
+  base: '/',
   integrations: [sitemap()],
   markdown: unified({
     remarkPlugins: [remarkMath],

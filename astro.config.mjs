@@ -9,9 +9,11 @@ export default defineConfig({
   site: 'https://smallhug.github.io',
   base: '/',
   integrations: [sitemap()],
-  markdown: unified({
-    remarkPlugins: [remarkMath],
-    rehypePlugins: [rehypeKatex],
+  markdown: {
+    processor: unified({
+      remarkPlugins: [remarkMath],
+      rehypePlugins: [rehypeKatex],
+    }),
     shikiConfig: {
       theme: 'github-light',
       themes: {
@@ -20,5 +22,5 @@ export default defineConfig({
       },
       wrap: true,
     },
-  }),
+  },
 });
